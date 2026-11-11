@@ -1,0 +1,12 @@
+.local/
+**/.env
+**/.env.*
+!**/.env.example
+**/vendor/
+**/node_modules/
+frontend/dist/
+frontend/test-results/
+frontend/playwright-report/
+**/*.log
+**/*.sqlite
+.DS_Store
