@@ -1,0 +1,67 @@
+name: TestPilot checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: testpilot_ci_only
+          POSTGRES_DB: testpilot_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: testpilot_ci_only
+      DB_DATABASE: testpilot_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_pgsql, mbstring, bcmath
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Backend install and checks
+        working-directory: backend
+        run: |
+          composer install --no-interaction --prefer-dist
+          cp .env.example .env
+          php artisan key:generate
+          php vendor/bin/pint --test
+          php artisan test
+      - name: Frontend checks
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run lint
+          npm run typecheck
+          npm run build
+      - name: Isolated browser database
+        working-directory: backend
+        run: |
+          PGPASSWORD="$DB_PASSWORD" createdb -h 127.0.0.1 -U postgres testpilot_e2e
+          DB_DATABASE=testpilot_e2e php artisan migrate --force
+          DB_DATABASE=testpilot_e2e php artisan db:seed --class=BrowserTestSeeder --force
+      - name: Browser checks
+        working-directory: frontend
+        run: |
+          npx playwright install --with-deps chromium
+          npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-failure
+          path: frontend/test-results/

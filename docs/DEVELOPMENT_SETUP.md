@@ -1,0 +1,46 @@
+# Development setup (Windows)
+
+## Verified environment, 2026-11-11
+
+| Component | Observed version/location |
+|---|---|
+| PHP | 8.3.29, D:\xampp\php\php.exe (CLI only) |
+| Composer | 2.8.6 |
+| Node/npm | 24.19.0 / 12.2.2 |
+| Git | 2.47.1.windows.2 |
+| PostgreSQL | 18.6, C:\Program Files\PostgreSQL\18\bin |
+| Docker client | 29.1.3; desktop-linux daemon unavailable |
+| Laravel/Sanctum | 13.42.0 / 4.4.0 |
+| React/TypeScript/Vite | 19.3.1 / 7.0.2 / 8.3.8 |
+| Tailwind/Query/Router | 4.3.5 / 5.107.1 / 7.18.5 |
+| Playwright | 1.65.0, installed Chrome for local tests |
+
+PHP extensions verified include pdo_pgsql, pgsql, pdo_sqlite, mbstring, openssl, curl, fileinfo, bcmath, XML/DOM, zip and tokenizer. No global tool installation or PATH change was performed. No Apache/XAMPP services are needed. Compatibility was checked against https://laravel.com/docs/13.x and https://vite.dev/guide/; exact resolved versions are in lockfiles.
+
+## Existing workspace
+
+Dependencies already installed. `.local/database.env` holds the generated local PostgreSQL credential; `backend/.env` holds app key and connection settings. These files are ignored. Start only this cluster with `infra/dev-db.ps1 start` if stopped. It listens only on loopback port 55432.
+
+From backend: `php artisan migrate`, then `php artisan serve --host=127.0.0.1 --port=8000`. From frontend: `npm run dev`. Open http://127.0.0.1:5173, consistently using the same hostname. Default Laravel APP_URL is backend localhost:8000; SPA stateful domains explicitly include 127.0.0.1:5173 and localhost:5173.
+
+Create accounts with `php artisan testpilot:user user@example.com --name="Name"`; password is hidden and must be at least 12 characters. No signup, password reset mail or production default credentials are configured.
+
+Background processes, each in its own terminal: `php artisan queue:work --tries=3 --timeout=60` and `php artisan schedule:work`. `php artisan testpilot:queue-probe` dispatches a heartbeat. On Windows, PHP lacks pcntl signal support; production Linux image explicitly installs pcntl. Production queue lifecycle must be rehearsed there.
+
+## Rebuild on a fresh machine
+
+Install approved PHP 8.3+ with required extensions, Composer, Node 24 and PostgreSQL 18 first; do not install globally without user permission. `composer install` in backend; `npm ci` in frontend. Copy backend/.env.example to backend/.env and run `php artisan key:generate`. Configure a dedicated database, not any existing project's DB.
+
+For an isolated Windows cluster, use PostgreSQL `initdb -D <workspace>\.local\postgres -U testpilot -A scram-sha-256 --pwfile=<private temporary password file> --encoding=UTF8 --locale=C`, delete only the password file afterwards, then `infra/dev-db.ps1 start`. Create `testpilot`, `testpilot_test`, `testpilot_e2e` using createdb against 127.0.0.1:55432. Save connection values as `.local/database.env` and mirror them in backend/.env. Use secure generated secrets, not the test-only CI passwords.
+
+## Tests
+
+- `php artisan test` in backend uses ephemeral SQLite by default for fast tests.
+- `infra/test-postgres.ps1` imports the private local credentials, selects only `testpilot_test`, runs the suite and restores process variables. This is the authoritative database check.
+- `php vendor/bin/pint --test` checks backend style.
+- In frontend: `npm run typecheck`, `npm run lint`, `npm run build`.
+- To seed browser fixtures, temporarily set `DB_DATABASE=testpilot_e2e`, run `php artisan migrate --force` and `php artisan db:seed --class=BrowserTestSeeder --force`, then restore/remove that process variable. The seeder refuses non-local/testing environments and DB names not ending `_e2e`.
+- `npm run test:e2e` starts API on 8001 and Vite on 5174 with separate cookie name and test database; it uses installed Chrome locally and Chromium in CI. The regular development servers on 8000/5173 can stay running.
+- Fixture credentials exist only in BrowserTestSeeder/e2e tests. Never seed those accounts in development or production. Repeated browser runs create separate projects in the disposable e2e DB.
+
+Network/process access inside Codex's sandbox required approved escalated execution for package downloads, PostgreSQL connections, PHP test subprocesses and browsers. This is an execution-environment limitation, not a requirement to run TestPilot as an administrator.

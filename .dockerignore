@@ -1,0 +1,16 @@
+.git
+.local
+**/node_modules
+**/vendor
+**/.env
+**/.env.*
+!**/.env.example
+frontend/dist
+frontend/test-results
+frontend/playwright-report
+backend/storage/logs/*
+backend/storage/framework/cache/data/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
+backend/bootstrap/cache/*.php
+**/*.sqlite

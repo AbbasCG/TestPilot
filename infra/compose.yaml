@@ -1,0 +1,94 @@
+name: testpilot
+x-app: &app
+  image: testpilot-api:${RELEASE_TAG:-local}
+  build:
+    context: ..
+    dockerfile: infra/Dockerfile.api
+  environment:
+    APP_NAME: TestPilot
+    APP_ENV: production
+    APP_KEY: ${APP_KEY:?Set a persistent Laravel application key}
+    APP_DEBUG: 'false'
+    APP_URL: ${APP_URL:?Set the approved HTTPS origin}
+    APP_LOCALE: ar
+    LOG_CHANNEL: stderr
+    LOG_LEVEL: warning
+    DB_CONNECTION: pgsql
+    DB_HOST: database
+    DB_PORT: '5432'
+    DB_DATABASE: testpilot
+    DB_USERNAME: testpilot
+    DB_PASSWORD: ${DB_PASSWORD:?Set application database secret}
+    SESSION_DRIVER: database
+    SESSION_ENCRYPT: 'true'
+    SESSION_COOKIE: testpilot_session
+    SESSION_SECURE_COOKIE: 'true'
+    SESSION_SAME_SITE: lax
+    SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS:?Set the SPA hostname}
+    CACHE_STORE: database
+    QUEUE_CONNECTION: database
+    FILESYSTEM_DISK: local
+  restart: unless-stopped
+  volumes:
+    - private_storage:/var/www/html/storage
+  networks: [private, edge]
+  depends_on:
+    database:
+      condition: service_healthy
+
+services:
+  database:
+    image: postgres:18-bookworm
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?Set a unique admin database secret}
+      TESTPILOT_DB_PASSWORD: ${DB_PASSWORD:?Set a unique application database secret}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./postgres-init.sh:/docker-entrypoint-initdb.d/10-testpilot.sh:ro
+    restart: unless-stopped
+    networks: [private]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U postgres -d postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  api:
+    <<: *app
+    healthcheck:
+      test: [CMD, php, -r, "exit(@fsockopen('127.0.0.1',9000) ? 0 : 1);"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+  worker:
+    <<: *app
+    command: [php, artisan, queue:work, --sleep=3, --tries=3, --timeout=60, --max-time=3600]
+    stop_grace_period: 75s
+  scheduler:
+    <<: *app
+    command: [php, artisan, schedule:work]
+  web:
+    image: testpilot-web:${RELEASE_TAG:-local}
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.web
+    ports: ['127.0.0.1:${HTTP_PORT:-8088}:80']
+    restart: unless-stopped
+    networks: [edge]
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD-SHELL, 'wget -q -O /dev/null http://127.0.0.1/api/health || exit 1']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+networks:
+  private:
+    internal: true
+  edge: {}
+volumes:
+  postgres_data: {}
+  private_storage: {}
