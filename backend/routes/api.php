@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\RunController;
 use App\Http\Controllers\ScenarioController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -33,4 +34,10 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::get('/projects/{project}/scenarios/{scenario}/revisions', [ScenarioController::class, 'revisions']);
     Route::get('/projects/{project}/scenario-templates', [ScenarioController::class, 'templates']);
     Route::get('/projects/{project}/scenario-options', [ScenarioController::class, 'options']);
+    Route::get('/projects/{project}/runs', [RunController::class, 'index']);
+    Route::post('/projects/{project}/runs', [RunController::class, 'store']);
+    Route::get('/projects/{project}/runs/{run}', [RunController::class, 'show']);
+    Route::put('/projects/{project}/runs/{run}/results/{result}', [RunController::class, 'result']);
+    Route::post('/projects/{project}/runs/{run}/transition', [RunController::class, 'transition']);
+    Route::get('/projects/{project}/runs/{run}/history', [RunController::class, 'history']);
 });

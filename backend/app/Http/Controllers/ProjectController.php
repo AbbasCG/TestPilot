@@ -69,6 +69,9 @@ class ProjectController extends Controller
         abort_if($user->id === $project->owner_id, 422, 'لا يمكن تغيير دور المالك.');
         DB::transaction(function () use ($project, $request, $data, $user) {
             Project::whereKey($project->id)->lockForUpdate()->firstOrFail();
+            if ($data['role'] === 'viewer') {
+                $this->assertNoActiveRun($project, $user->id);
+            }
             $project->members()->syncWithoutDetaching([$user->id => ['role' => $data['role']]]);
             $this->service->audit($project, $request->user(), 'member.updated', ['user_id' => $user->id, 'role' => $data['role']]);
         });
@@ -114,6 +117,7 @@ class ProjectController extends Controller
         DB::transaction(function () use ($project, $member, $request) {
             Project::whereKey($project->id)->lockForUpdate()->firstOrFail();
             abort_unless($project->members()->where('users.id', $member)->exists(), 404);
+            $this->assertNoActiveRun($project, $member);
             $project->members()->detach($member);
             $this->service->audit($project, $request->user(), 'member.removed', ['user_id' => $member]);
         });
@@ -128,5 +132,12 @@ class ProjectController extends Controller
             'active_projects' => $request->user()->projects()->where('status', 'active')->count(),
             'environments' => DB::table('environments')->whereIn('project_id', $request->user()->projects()->select('projects.id'))->count(),
         ]]);
+    }
+
+    private function assertNoActiveRun(Project $project, int $userId): void
+    {
+        abort_if(DB::table('run_participants')->join('test_runs', 'test_runs.id', '=', 'run_participants.test_run_id')
+            ->where('test_runs.project_id', $project->id)->where('run_participants.user_id', $userId)
+            ->whereIn('test_runs.status', ['active', 'paused'])->exists(), 422, 'المختبر مشارك في جلسة نشطة. أنهِ الجلسة قبل تغيير وصوله.');
     }
 }

@@ -40,6 +40,7 @@ import { api, ApiError } from "./api";
 import type { Page, Project, User } from "./api";
 import { TestManagement } from "./testing/TestManagement";
 import { ProjectMaintenance } from "./testing/ProjectMaintenance";
+import { RunManagement } from "./testing/RunManagement";
 
 const client = new QueryClient({
   defaultOptions: {
@@ -576,6 +577,7 @@ function ProjectDetail() {
         }
       />
       <nav className="tabs" aria-label="أقسام المشروع">
+        <NavLink to={`/projects/${id}/runs`}>جلسات الاختبار</NavLink>
         <NavLink to={`/projects/${id}/tests`}>الاختبارات</NavLink>
         <NavLink to={`/projects/${id}`} end>
           نظرة عامة
@@ -586,6 +588,7 @@ function ProjectDetail() {
         <NavLink to={`/projects/${id}/edit`}>إعدادات المشروع</NavLink>
       </nav>
       <Routes>
+        <Route path="runs/*" element={<RunManagement project={p} />} />
         <Route path="tests/*" element={<TestManagement project={p} />} />
         <Route index element={<ProjectOverview project={p} />} />
         <Route path="team" element={<Team project={p} />} />

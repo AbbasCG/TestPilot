@@ -1,11 +1,11 @@
-# Roadmap and dependency order
+# Roadmap — 2026-11-12
 
-1. Receive and preserve the complete official PHASE 0–22 reference in MASTER_REQUIREMENTS.md. Map every phase and requirement to M1–M8, implementation files and verification. Do not drop future features.
-2. Reconcile M1/M2 foundation against that source. Current account provisioning is CLI-only, settings show account/theme only; environments support add/list, memberships add/update/list. Add lifecycle actions and authorization changes if required by the source. Expand tests before marking full milestone acceptance.
-3. M3: implement suites/cases with prerequisites and expected results; transactional ordered steps; separate Tester A/B scenario roles; scenario builder/template CRUD, linking and reordering; API policies/resources/FormRequests; real Arabic screens. Validate cross-project references and revisions.
-4. M4 (depends on M3): immutable run snapshots, participants, assignments, per-tester result ownership, shared checkpoints/barrier rules, idempotent persistence and audit. Prove a full two-person workflow, unauthorized result edits, cross-project isolation, concurrent updates and browser refresh recovery. The current two-user membership browser test does **not** satisfy this acceptance criterion.
-5. M5–M8: retained, blocked on actual source. Assign exact scope and dependencies after reading every phase; do not fabricate names or remove unimplemented features.
-6. Operations hardening: build containers, Linux queue rehearsal, backup/restore, secret management, HTTPS rehearsal, log retention, monitoring and release/rollback drill. Production remains prohibited until explicit approval.
+1. M1/M2 foundation and lifecycle implemented; reconcile with official source when received.
+2. M3 scenario management implemented and tested, commit 38f564f.
+3. M4 collaborative runs implemented and tested with separate real accounts.
+4. M5 next: secure screenshots, failed-result issues, issue status and linked retests. Result recording/history already exists.
+5. M6–M8 retained, detailed source missing; do not invent their scope.
+6. Operations: container runtime, backup/restore and release rehearsal remain pending. No deployment or DNS changes without approval.
 
 ## Full phase registry (source pending)
 
@@ -34,3 +34,4 @@
 | PHASE 20 | Awaiting full text | Pending |
 | PHASE 21 | Awaiting full text | Pending |
 | PHASE 22 | Awaiting full text | Pending |
+

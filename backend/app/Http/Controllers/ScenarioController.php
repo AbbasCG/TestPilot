@@ -94,6 +94,6 @@ class ScenarioController extends Controller
     {
         Gate::authorize('view', $project);
 
-        return response()->json(['data' => TestCase::where('project_id', $project->id)->orderBy('title')->get(['id', 'title', 'status', 'suite_id'])]);
+        return response()->json(['data' => TestCase::where('project_id', $project->id)->orderBy('title')->get(['id', 'title', 'status', 'suite_id', 'version'])]);
     }
 }

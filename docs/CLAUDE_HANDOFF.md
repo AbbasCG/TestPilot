@@ -1,59 +1,39 @@
-# Claude handoff
+# Claude handoff — 2026-11-12
 
-## Current continuation checkpoint — 2026-11-12
+## Resume here
 
-M2 environment edit/archive and membership removal implemented. M3 now has test_suites/test_cases/scenario_revisions, immutable full-content revisions, ScenarioController/Request/Resource/Service, all twelve step types, ten templates, visual library/builder/detail/history in frontend/src/testing. Follow CONTINUATION_REQUIREMENTS.md (verbatim user attachment) for M3→M4→M5; the official PHASE 0–22 text is still missing, but this attachment explicitly authorizes implementation. M3 passed 16 PostgreSQL tests / 121 assertions plus browser creation/edit/reload/history. M4 is next. Run `git log -1 --oneline` for the milestone commit. The sections below describe the original foundation and are retained as history until the final handoff rewrite.
+M1–M4 are implemented against FOUNDATION_REQUEST.md and CONTINUATION_REQUIREMENTS.md. M3 commit: 38f564f. Collaborative implementation is the next local commit; obtain its exact hash with `git log -1 --oneline` (a document cannot contain its own commit hash). No remote exists. Do not reinitialize or scaffold again.
 
-## 1. What actually exists
+Read CLAUDE.md, IMPLEMENTATION_STATUS.md and REQUIREMENTS_TRACEABILITY.md. MASTER_REQUIREMENTS.md is a placeholder: none of the official PHASE 0–22 source sections was actually supplied. The continuation explicitly permits implementation now. Do not invent M6–M8 requirements or claim full master acceptance.
 
-A running, persisted foundation for Arabic RTL project quality management. Laravel/Sanctum session auth; PostgreSQL project/membership/environment/audit schema; scoped REST API; policy enforcement; version conflicts; real React dashboard and project flows. No M3/M4 domain implementation is claimed.
+## Implementation map
 
-## 2. Files and components
+- Backend project foundation: ProjectController/Service/Policy, AuthController; environment and membership lifecycle.
+- M3: ScenarioController/Request/Resource/Service; TestSuite, TestCase, ScenarioRevision; config/scenario_templates.php; test management migration.
+- M4: RunController, RunRequest, RunService, TestRun; collaborative runs migration. Tables: test_runs, run_participants, run_cases, step_results, result_history.
+- Snapshots pin full scenario revision and environment details. Result ownership is checked server-side, even for project owners. Project/run locks and optimistic versions prevent conflicts. Every result update appends history. Completion is an explicit authorized assessment, never automatic checkbox success.
+- Frontend: src/testing/TestManagement.tsx, ProjectMaintenance.tsx, RunManagement.tsx, types.ts, shared.tsx; App.tsx route integration; index.css responsive RTL.
+- Pages: /projects/:id/tests, tests/new, tests/:scenarioId, tests/:scenarioId/edit; runs, runs/new, runs/:runId.
+- API: project-scoped suites, scenarios, revisions, templates/options; runs GET/POST, runs/{run} GET, results/{result} PUT, transition POST, history GET. Inspect backend/routes/api.php for exact paths.
 
-- backend/app/Http/Controllers: AuthController, ProjectController, HealthController.
-- backend/app/Http/Requests/ProjectRequest.php; Resources/ProjectResource.php; Policies/ProjectPolicy.php; Services/ProjectService.php.
-- Models User, Project, Environment; project foundation migration and standard auth/session/cache/queue/Sanctum migrations.
-- Console/Commands/CreateUser.php; Jobs/RecordQueueHeartbeat.php; routes/api.php and console.php.
-- tests/Feature/ProjectFoundationTest.php and QueueHeartbeatTest.php; BrowserTestSeeder guarded to a dedicated e2e DB.
-- frontend/src/App.tsx: Login, Shell, Dashboard, Projects, ProjectWizard, ProjectDetail, ProjectOverview, Team, EditProject, SettingsPage. api.ts implements relative fetch with CSRF and normalized errors. index.css is the design system; local Noto Sans Arabic.
-- frontend/e2e/foundation.spec.ts and playwright.config.ts; two real browser tests with separate DB/API/frontend ports.
-- infra: Compose, Dockerfiles, Nginx templates, PostgreSQL init, backup, local DB lifecycle and PostgreSQL test scripts. .github/workflows/ci.yml is check-only.
+## Verification
 
-## 3. How it works
+21 PostgreSQL tests / 181 assertions pass. TypeScript, lint, production build and Pint pass. Two nonblocking Fast Refresh export warnings. Collaboration browser test passes with two independent browser contexts, persisted results after reload, synchronization, checkpoint ownership and explicit completion. The reload assertion uses the textbox accessible role: implicit label text can include textarea contents after remount.
 
-See SYSTEM_ARCHITECTURE.md and DATABASE_DESIGN.md. Project membership is the isolation boundary; owner/manager/tester/viewer are project roles. Owner alone changes memberships. Policy checks precede all scoped operations. Project edit is transactional/locked/versioned; activity shares the transaction. Future Tester A/B roles are separate and not yet implemented. The frontend never substitutes mock data for API results.
+## Next work, in order
 
-## 4. Local startup
+1. Complete M5: issue creation from a failed saved result, private authenticated screenshot uploads with byte validation/reencoding, issue state/version history, linked retest after fix. Preserve original run and failure history. No placeholder controls.
+2. Add relevant backend ownership/isolation/MIME/conflict tests and real browser issue/evidence/retest flow.
+3. Review cross-scenario dependency changes: same-scenario downstream passed steps lock prerequisite edits; equivalent cross-case invalidation needs review.
+4. Reconcile M1–M8 when actual master source arrives; retain every phase in ROADMAP.md.
+5. Operations rehearsal remains pending. Deployment and DNS are prohibited.
 
-See README.md and DEVELOPMENT_SETUP.md. Existing private configuration is in backend/.env and .local/database.env. Start only the TestPilot cluster with infra/dev-db.ps1 start if needed, backend on 127.0.0.1:8000 and Vite on 127.0.0.1:5173. Use `php artisan testpilot:user <email> --name=<name>` to create an account with a hidden password. Production credentials do not exist.
+## Local operation
 
-## 5. Tests
+Working directory D:\Projects\TestPilot. Start isolated PostgreSQL with `./infra/dev-db.ps1 start`. Configuration already exists in ignored backend/.env and .local/database.env; never print or commit secrets. Development DB testpilot; unit/integration DB testpilot_test; browser DB testpilot_e2e. Run `php artisan migrate` in backend for development updates; migrate the E2E DB separately. Never reset development data.
 
-From root: infra/test-postgres.ps1. From frontend: npm run typecheck, npm run lint, npm run build, npm run test:e2e. Browser DB testpilot_e2e is migrated/seeded; regular DB remains independent. Last verified backend: 9 tests/46 assertions; Playwright: 2 passing tests. See IMPLEMENTATION_STATUS.md for coverage limits. Test artifacts under frontend/test-results are ignored.
+Backend: `php artisan serve --host=127.0.0.1 --port=8000` in backend. Frontend: `npm run dev` in frontend. Provision a local account using `php artisan testpilot:user email --name=Name` (hidden password). Backend checks: `./infra/test-postgres.ps1`. Frontend checks: npm run typecheck, npm run lint, npm run build, npm run test:e2e. Playwright owns ports 8001/5174, uses installed Chrome and isolated seeded accounts. Fixtures are guarded to the E2E database.
 
-## 6. Git handoff point
+Stage explicit paths only; never .local, .env, vendor, node_modules or test artifacts. No git add .; no push/deployment/DNS/global tools; do not modify Tharaa, EMC or LifeOS.
 
-Implementation commits: `fd0cca0` (backend foundation), `2a9879f` (Arabic frontend and browser tests; latest application-code commit). Operations/documentation are committed separately after verification. For the exact final delivery commit use `git log -1 --format="%h %s"`; a document cannot embed the hash of its own commit without changing that hash. No remote or push. Do not redo scaffolding or reinitialize Git.
-
-## 7. Remaining issues
-
-The actual PHASE 0–22 reference is missing despite a follow-up designating it authoritative. MASTER_REQUIREMENTS.md explicitly records that fact, not invented requirements. M3/M4 cannot be claimed complete; M5–M8 remain in scope. Docker daemon unavailable; image build, Nginx runtime, TLS and restore unverified. Environment/member lifecycle gaps and settings limits are itemized in IMPLEMENTATION_STATUS.md.
-
-## 8. Architectural decisions
-
-Dedicated monorepo; Laravel API + React SPA, PostgreSQL; same-origin cookie auth rather than browser tokens; project policies rather than trusting client project IDs; atomic audit; optimistic versions and row locks; database queue/cache; private storage and no published DB port. Future immutable run snapshots, domain services and result ownership boundaries are documented as design intent, conditional on the official reference. No unrequested tenant/billing architecture was invented.
-
-## 9. Next work in dependency order
-
-1. Obtain the official source, preserve it completely, read every phase, map every requirement and reconcile M1/M2. User explicitly requires this before domain implementation.
-2. Close source-required foundation gaps; retain tested auth/isolation contracts.
-3. M3 suites/cases/revisions/ordered steps, role-aware scenarios/templates and real builder/detail UI with association validation.
-4. M4 run snapshots, participants, step assignments, results, checkpoints and two-person integration/browser tests, including concurrent and unauthorized edits.
-5. Map and implement all M5–M8 requirements without dropping future functionality.
-6. Build/rehearse isolated Linux operations, backup/restore, HTTPS and rollback. Obtain explicit user approval before deployment or DNS changes; inspect existing VPS services first.
-
-## 10. Do not repeat
-
-Do not reinstall tools globally, move XAMPP, change PATH, recreate the PostgreSQL cluster, replace working auth with tokens, rerun test fixtures in the development database, recreate the React/Laravel scaffold, modify other projects or deploy. Preserve lockfiles, schema history, policies, versions, real API connections, RTL and the existing tests.
-
-Laravel Boost dev dependency and generated backend AGENTS.md/CLAUDE.md came from scaffold setup. Read applicable guidelines; user instructions take precedence, especially no deployment and no global changes. Agency Agents are intended for the user's later Claude workflow; they were not claimed installed or used here.
+Final browser regression: all 4 Playwright tests passed (53.2 seconds).
