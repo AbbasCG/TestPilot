@@ -27,6 +27,7 @@ Local-only branches such as `backup/*` and `claude/*` are never pushed.
 8. After CI passes, review and owner approval, merge it into `dev`, then push `dev`.
 9. If no `dev` → `main` PR is open, open one. If one is open, it updates automatically with the new `dev` commits; update its description (results, risks, notes) instead of creating a duplicate.
 10. Never merge into `main` without the owner's explicit approval. Never deploy as part of this flow.
+11. After a `dev` → `main` PR is merged, do **not** delete `dev` (GitHub offers a "Delete branch" button). Fast-forward `dev` to `main` (`git merge --ff-only origin/main`, then push) before starting the next task. Task branches may be deleted after merge.
 
 Never: force push, `git reset --hard`, `git clean -fd`, rewriting published history, pushing failing or incomplete work as ready, or committing secrets, `.env`, `.local/`, `vendor/`, `node_modules/`, `dist/`, test artifacts, or database dumps. The Thmanyah font files are committed with the owner's permission; keep them unmodified.
 
