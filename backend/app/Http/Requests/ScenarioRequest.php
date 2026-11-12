@@ -41,7 +41,8 @@ class ScenarioRequest extends FormRequest
             'steps.*.url' => ['nullable', 'url:http,https', 'max:2048'],
             'steps.*.evidence_required' => ['required', 'boolean'],
             'steps.*.depends_on' => ['present', 'array', 'max:100'],
-            'steps.*.depends_on.*' => ['uuid', 'distinct'],
+            // Uniqueness is checked per step in after(): a wildcard "distinct" would wrongly forbid two steps sharing a prerequisite.
+            'steps.*.depends_on.*' => ['uuid'],
             'steps.*.expected_result' => ['required', 'string', 'max:5000'],
         ];
         foreach (['description', 'objective', 'prerequisites', 'required_account', 'required_role', 'test_data', 'expected_results', 'acceptance_criteria'] as $field) {
@@ -71,7 +72,11 @@ class ScenarioRequest extends FormRequest
                 if (! is_array($step)) {
                     continue;
                 }
-                foreach (is_array($step['depends_on'] ?? null) ? $step['depends_on'] : [] as $dependency) {
+                $dependencies = is_array($step['depends_on'] ?? null) ? $step['depends_on'] : [];
+                if (count($dependencies) !== count(array_unique(array_map('strval', $dependencies)))) {
+                    $validator->errors()->add("steps.$index.depends_on", 'لا تكرر الاعتماد نفسه داخل الخطوة.');
+                }
+                foreach ($dependencies as $dependency) {
                     if (! in_array($dependency, $seen, true)) {
                         $validator->errors()->add("steps.$index.depends_on", 'يجب أن تعتمد الخطوة على خطوة سابقة موجودة.');
                     }
