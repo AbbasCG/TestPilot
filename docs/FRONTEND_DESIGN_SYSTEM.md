@@ -16,7 +16,7 @@ Plan review: a generic dashboard card grid would conceal the primary work. Use a
 
 - Families: Thmanyah Sans for all interface text (300 light, 400 regular, 500 medium, 700 bold, 900 black); Thmanyah Serif Display (700, 900) only for page titles (`h1`) and the printable report title. One expressive face, used in one place.
 - Tokens (Tailwind 4 `@theme` in index.css): `--font-sans`, `--font-display`, `--font-mono` (technical identifiers only: issue numbers, hashes). Every element inherits `--font-sans`; buttons, inputs, selects, textareas use `font: inherit`.
-- Fallback: Noto Sans Arabic Variable (bundled, OFL) → system UI. Faces load with `font-display: swap` from hashed bundled files; licensed files stay out of Git (see DEVELOPMENT_SETUP.md).
+- Fallback: Noto Sans Arabic Variable (bundled, OFL) → system UI. Faces load with `font-display: swap` from hashed bundled files committed under `src/assets/fonts/thmanyah/` (owner-approved, see DEVELOPMENT_SETUP.md).
 - Scale: body 15px / line-height 1.75; page title 30px / 1.45 serif display 700; section 19px, card titles 16px, labels 13px medium, meta 11–12px. Weights in CSS map to available faces only (no 600/650/750/800).
 - Controls: buttons min-height 40px, inputs 42px, textareas 88px. Table headers medium 500. Numbers in stats use tabular figures.
 - Verified in light/dark at 1440 and 390 px on dashboard, project, scenario builder, issues and analytics (e2e/typography.spec.ts).

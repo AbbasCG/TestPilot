@@ -58,8 +58,8 @@ jobs:
           npm run lint
           npm run typecheck
           npm run build
-          # Licensed Thmanyah fonts are never in the repository; CI verifies the Noto fallback build.
-          ! ls dist/assets | grep -qi thmanyah
+          # The Thmanyah faces must be bundled into the build.
+          test "$(ls dist/assets | grep -ci thmanyah)" -eq 7
       - name: Isolated browser database
         working-directory: backend
         run: |

@@ -51,7 +51,7 @@ Follow GIT_WORKFLOW.md: branch `feature/*` or `fix/*` from `dev`, test, commit w
 
 ## Fonts (Thmanyah)
 
-The interface uses Thmanyah Sans and Thmanyah Serif Display. Their licence forbids uploading or hosting the font files, so they are not in Git. On each licensed machine copy the seven `.woff2` files listed in `frontend/src/assets/fonts/thmanyah/README.md` into that folder (downloaded from https://font.thmanyah.com). `src/fonts.ts` registers them with `font-display: swap`; Vite bundles them with hashed names into `dist/assets`. Without them (fresh clone, CI) the app uses the bundled Noto Sans Arabic. `e2e/typography.spec.ts` checks whichever mode is active. The owner's original copies are backed up in `.local/backups/fonts-thmanyah-original-20261112` with SHA-256 sums. Do not treat `frontend/dist` as a source: `npm run build` empties it.
+The interface uses Thmanyah Sans (300/400/500/700/900) and Thmanyah Serif Display (700/900). The seven `.woff2` files and the licence text are committed in `frontend/src/assets/fonts/thmanyah/` with the owner's permission (confirmed 2026-11-12). `src/fonts.ts` registers them with `font-display: swap`; Vite bundles them with hashed names into `dist/assets`, and CI asserts all seven are present. If a file were missing, the bundled Noto Sans Arabic is used. `e2e/typography.spec.ts` checks that the faces load and apply on every main screen. Do not treat `frontend/dist` as a source: `npm run build` empties it. The owner's original copies are also backed up in `.local/backups/fonts-thmanyah-original-20261112`.
 
 ## Manual two-browser test (local)
 

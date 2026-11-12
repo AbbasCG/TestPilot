@@ -513,7 +513,7 @@ function ProjectWizard() {
               </span>
               <label>
                 وصف المشروع
-                <textarea
+                <textarea aria-label="وصف المشروع"
                   {...form.register("description")}
                   rows={4}
                   placeholder="ما الذي سيختبره الفريق في هذا المشروع؟"
@@ -820,7 +820,7 @@ function EditProject({ project: p }: { project: Project }) {
         </label>
         <label>
           الوصف
-          <textarea
+          <textarea aria-label="الوصف"
             {...form.register("description")}
             maxLength={5000}
             rows={4}

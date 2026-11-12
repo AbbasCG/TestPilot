@@ -103,6 +103,8 @@ test("complete collaborative QA lifecycle ends in a verified report", async ({ p
 
   // 5. Tester B creates the issue from the failed result and attaches a screenshot.
   await failed.getByRole("link", { name: "إنشاء مشكلة من هذه النتيجة" }).click();
+  await expect(tester).toHaveURL(/\/issues\/new\?/);
+  await expect(tester.getByRole("heading", { name: "تسجيل مشكلة" })).toBeVisible();
   await expect(tester.getByRole("textbox", { name: "النتيجة الفعلية", exact: true })).toHaveValue("رسالة خطأ 500 عند قبول الدعوة");
   await tester.getByRole("textbox", { name: "الوصف", exact: true }).fill("قبول دعوة المعلّم يعيد خطأ خادم.");
   await tester.getByRole("combobox", { name: "الخطورة" }).selectOption("blocker");
@@ -131,6 +133,7 @@ test("complete collaborative QA lifecycle ends in a verified report", async ({ p
   // 7. Tester B retests v2.0.1 with evidence; the issue becomes verified. Owner closes it.
   await tester.goto(issuePath);
   await tester.getByRole("link", { name: "تنفيذ إعادة الاختبار" }).click();
+  await expect(tester.getByRole("heading", { name: "إعادة الاختبار — المحاولة 1" })).toBeVisible();
   await tester.getByLabel("الملف", { exact: true }).setInputFiles({ name: "accept-ok.png", mimeType: "image/png", buffer: PNG });
   await tester.getByRole("button", { name: "رفع الدليل" }).click();
   await expect(tester.getByRole("img", { name: "لقطة شاشة: accept-ok.png" })).toBeVisible();
