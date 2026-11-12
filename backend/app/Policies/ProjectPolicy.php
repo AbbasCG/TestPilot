@@ -24,4 +24,9 @@ class ProjectPolicy
     {
         return $project->owner_id === $user->id;
     }
+
+    public function designTests(User $user, Project $project): bool
+    {
+        return $project->members()->where('users.id', $user->id)->wherePivotIn('role', ['owner', 'manager', 'tester'])->exists();
+    }
 }

@@ -10,7 +10,13 @@ export type Project = {
   owner_id: number;
   members_count?: number;
   members?: Member[];
-  environments?: { id: number; name: string; url: string | null }[];
+  environments?: {
+    id: number;
+    name: string;
+    url: string | null;
+    archived: boolean;
+    version: number;
+  }[];
 };
 export type Page<T> = {
   data: T[];

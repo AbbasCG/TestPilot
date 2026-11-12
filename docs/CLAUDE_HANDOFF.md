@@ -1,5 +1,9 @@
 # Claude handoff
 
+## Current continuation checkpoint — 2026-11-12
+
+M2 environment edit/archive and membership removal implemented. M3 now has test_suites/test_cases/scenario_revisions, immutable full-content revisions, ScenarioController/Request/Resource/Service, all twelve step types, ten templates, visual library/builder/detail/history in frontend/src/testing. Follow CONTINUATION_REQUIREMENTS.md (verbatim user attachment) for M3→M4→M5; the official PHASE 0–22 text is still missing, but this attachment explicitly authorizes implementation. M3 passed 16 PostgreSQL tests / 121 assertions plus browser creation/edit/reload/history. M4 is next. Run `git log -1 --oneline` for the milestone commit. The sections below describe the original foundation and are retained as history until the final handoff rewrite.
+
 ## 1. What actually exists
 
 A running, persisted foundation for Arabic RTL project quality management. Laravel/Sanctum session auth; PostgreSQL project/membership/environment/audit schema; scoped REST API; policy enforcement; version conflicts; real React dashboard and project flows. No M3/M4 domain implementation is claimed.

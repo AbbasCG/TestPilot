@@ -12,6 +12,9 @@ try {
     Push-Location (Join-Path $root 'backend')
     try { php artisan test; $result = $LASTEXITCODE } finally { Pop-Location }
 } finally {
-    foreach ($key in $saved.Keys) { [Environment]::SetEnvironmentVariable($key, $saved[$key], 'Process') }
+    foreach ($key in $saved.Keys) {
+        if ($null -eq $saved[$key]) { Remove-Item -LiteralPath "Env:$key" -ErrorAction SilentlyContinue }
+        else { [Environment]::SetEnvironmentVariable($key, $saved[$key], 'Process') }
+    }
 }
 exit $result

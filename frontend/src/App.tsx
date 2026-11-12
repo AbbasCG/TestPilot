@@ -38,6 +38,8 @@ import {
 } from "lucide-react";
 import { api, ApiError } from "./api";
 import type { Page, Project, User } from "./api";
+import { TestManagement } from "./testing/TestManagement";
+import { ProjectMaintenance } from "./testing/ProjectMaintenance";
 
 const client = new QueryClient({
   defaultOptions: {
@@ -574,6 +576,7 @@ function ProjectDetail() {
         }
       />
       <nav className="tabs" aria-label="أقسام المشروع">
+        <NavLink to={`/projects/${id}/tests`}>الاختبارات</NavLink>
         <NavLink to={`/projects/${id}`} end>
           نظرة عامة
         </NavLink>
@@ -583,11 +586,19 @@ function ProjectDetail() {
         <NavLink to={`/projects/${id}/edit`}>إعدادات المشروع</NavLink>
       </nav>
       <Routes>
+        <Route path="tests/*" element={<TestManagement project={p} />} />
         <Route index element={<ProjectOverview project={p} />} />
         <Route path="team" element={<Team project={p} />} />
         <Route
           path="edit"
-          element={<EditProject key={p.version} project={p} />}
+          element={
+            <>
+              <EditProject key={p.version} project={p} />
+              {["owner", "manager"].includes(p.role) && (
+                <ProjectMaintenance project={p} />
+              )}
+            </>
+          }
         />
       </Routes>
     </>

@@ -7,7 +7,9 @@ use App\Http\Resources\ProjectResource;
 use App\Models\Project;
 use App\Models\User;
 use App\Services\ProjectService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
@@ -79,6 +81,44 @@ class ProjectController extends Controller
         Gate::authorize('view', $project);
 
         return response()->json(['data' => DB::table('activity_logs')->where('project_id', $project->id)->latest('id')->limit(30)->get()]);
+    }
+
+    public function updateEnvironment(Request $request, Project $project, int $environment): JsonResponse
+    {
+        Gate::authorize('view', $project);
+        Gate::authorize('update', $project);
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:80', Rule::unique('environments')->where('project_id', $project->id)->ignore($environment)],
+            'url' => ['nullable', 'url:http,https', 'max:2048'], 'archived' => 'required|boolean', 'version' => 'required|integer|min:1',
+        ]);
+
+        return DB::transaction(function () use ($project, $environment, $data, $request) {
+            Project::whereKey($project->id)->lockForUpdate()->firstOrFail();
+            $model = $project->environments()->lockForUpdate()->findOrFail($environment);
+            abort_if($model->version !== (int) $data['version'], 409, 'تم تعديل البيئة. حدّث الصفحة.');
+            $model->fill($data);
+            $model->archived = $data['archived'];
+            $model->version++;
+            $model->save();
+            $this->service->audit($project, $request->user(), 'environment.updated', ['environment_id' => $model->id]);
+
+            return response()->json(['data' => $model]);
+        });
+    }
+
+    public function removeMember(Request $request, Project $project, int $member): Response
+    {
+        Gate::authorize('view', $project);
+        Gate::authorize('manageMembers', $project);
+        abort_if($member === $project->owner_id, 422, 'لا يمكن إزالة مالك المشروع.');
+        DB::transaction(function () use ($project, $member, $request) {
+            Project::whereKey($project->id)->lockForUpdate()->firstOrFail();
+            abort_unless($project->members()->where('users.id', $member)->exists(), 404);
+            $project->members()->detach($member);
+            $this->service->audit($project, $request->user(), 'member.removed', ['user_id' => $member]);
+        });
+
+        return response()->noContent();
     }
 
     public function dashboard(Request $request)

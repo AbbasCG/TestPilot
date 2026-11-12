@@ -1,4 +1,10 @@
-# Implementation status — 2026-11-11
+# Implementation status — current checkpoint 2026-11-12
+
+## Continuation checkpoint (supersedes the historical foundation record below)
+
+M2 lifecycle gaps now have environment edit/archive with version conflicts and owner-controlled membership removal. M3 is implemented against CONTINUATION_REQUIREMENTS.md: suites create/edit/order/archive/counts; full scenario fields; visual ordered step builder with all twelve types; independent immutable revisions; dependency validation; ten built-in templates and reusable project scenarios; real API/UI. Tests: 16 backend tests / 121 assertions on PostgreSQL; scenario builder browser test passes, including reload and old revision display. Existing foundation browser checks passed during this stage. TypeScript/build and ESLint (Babel parser for TS7) verified. M4 is next, not yet implemented. PHASE 0–22 remains absent, but the latest attachment explicitly authorizes these domain features.
+
+## Historical foundation record (2026-11-11)
 
 ## Complete (verified deliverables, not full master-reference acceptance)
 

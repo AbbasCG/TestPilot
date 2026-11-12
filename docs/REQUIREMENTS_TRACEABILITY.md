@@ -1,5 +1,19 @@
 # Requirements traceability
 
+Current source C: CONTINUATION_REQUIREMENTS.md, preserved verbatim. All PHASE 0–22 sections remain absent; C explicitly authorizes implementation now.
+
+| Current source | Delivered | Evidence |
+|---|---|---|
+| C §2 | Environment edit/archive/version, membership removal, owner invariant | ScenarioManagementTest lifecycle test; ProjectMaintenance UI |
+| C §3.1 | Suites create/edit/order/archive and total/ready counts | ScenarioController; suite version/archive tests |
+| C §3.2–3.3 | Complete scenario metadata and twelve ordered step types; visual persistent builder | ScenarioRequest/Service/Resource; TestManagement; browser workflow |
+| C §3.4 | Immutable revisions on every edit; stale writes rejected | revision history and conflict tests |
+| C §3.5 | Ten built-in templates and project reusable scenarios | all ten instantiated in backend tests |
+| C §4 | Collaborative runs | Next milestone |
+| C §5 | Results/issues/evidence/retest | After M4 |
+
+The entries below are the preserved foundation checkpoint; this current source table takes precedence where functionality has advanced.
+
 Source F: initial foundation prompt supplied on 2026-11-11. The user has confirmed that a separate PHASE 0–22 reference is authoritative; its text has not yet been received. Do not invent or collapse those phases.
 
 | Source | Milestone | Implementation target | Verification |
