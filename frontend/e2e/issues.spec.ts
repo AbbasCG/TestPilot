@@ -57,6 +57,8 @@ test("failed step becomes an issue with private evidence, fix, independent retes
   await card.getByRole("button", { name: "حفظ نتيجة الخطوة", exact: true }).click();
   await expect(card.getByRole("status")).toHaveText("حُفظت النتيجة");
   await card.getByRole("link", { name: "إنشاء مشكلة من هذه النتيجة" }).click();
+  await expect(page).toHaveURL(/\/issues\/new\?/);
+  await expect(page.getByRole("heading", { name: "تسجيل مشكلة" })).toBeVisible();
 
   // The issue form is prefilled from the frozen run snapshot.
   await expect(page.getByRole("textbox", { name: "النتيجة الفعلية", exact: true })).toHaveValue("زر إرسال الدعوة لا يستجيب ولا تظهر رسالة");

@@ -28,7 +28,7 @@ class AppServiceProvider extends ServiceProvider
             Limit::perMinute($perAccount)->by(strtolower((string) $request->input('email')).'|'.$request->ip()),
             Limit::perMinute($perAccount * 6)->by($request->ip()),
         ]);
-        RateLimiter::for('evidence', fn (Request $request) => Limit::perMinute(20)->by($request->user()?->id ?: $request->ip()));
-        RateLimiter::for('api', fn (Request $request) => Limit::perMinute(120)->by($request->user()?->id ?: $request->ip()));
+        RateLimiter::for('evidence', fn (Request $request) => Limit::perMinute(max(1, (int) config('auth.evidence_uploads_per_minute', 20)))->by($request->user()?->id ?: $request->ip()));
+        RateLimiter::for('api', fn (Request $request) => Limit::perMinute(max(1, (int) config('auth.api_requests_per_minute', 120)))->by($request->user()?->id ?: $request->ip()));
     }
 }
