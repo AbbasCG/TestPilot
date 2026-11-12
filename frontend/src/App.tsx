@@ -42,6 +42,7 @@ import { TestManagement } from "./testing/TestManagement";
 import { ProjectMaintenance } from "./testing/ProjectMaintenance";
 import { RunManagement } from "./testing/RunManagement";
 import { IssueManagement } from "./issues/IssueManagement";
+import { AnalyticsSection, ProjectComparison } from "./analytics/Analytics";
 
 const client = new QueryClient({
   defaultOptions: {
@@ -409,6 +410,7 @@ function Dashboard() {
           projects.data && <ProjectTable projects={projects.data.data} />
         )}
       </section>
+      <ProjectComparison />
     </>
   );
 }
@@ -581,6 +583,7 @@ function ProjectDetail() {
         <NavLink to={`/projects/${id}/runs`}>جلسات الاختبار</NavLink>
         <NavLink to={`/projects/${id}/tests`}>الاختبارات</NavLink>
         <NavLink to={`/projects/${id}/issues`}>المشكلات</NavLink>
+        <NavLink to={`/projects/${id}/analytics`}>التحليلات</NavLink>
         <NavLink to={`/projects/${id}`} end>
           نظرة عامة
         </NavLink>
@@ -593,6 +596,7 @@ function ProjectDetail() {
         <Route path="runs/*" element={<RunManagement project={p} />} />
         <Route path="tests/*" element={<TestManagement project={p} />} />
         <Route path="issues/*" element={<IssueManagement project={p} />} />
+        <Route path="analytics/*" element={<AnalyticsSection project={p} />} />
         <Route index element={<ProjectOverview project={p} />} />
         <Route path="team" element={<Team project={p} />} />
         <Route

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\IssueController;
@@ -52,5 +53,8 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::put('/projects/{project}/retests/{retest}', [IssueController::class, 'recordRetest'])->whereNumber('retest');
     Route::put('/projects/{project}/retests/{retest}/assignee', [IssueController::class, 'reassignRetest'])->whereNumber('retest');
     Route::post('/projects/{project}/evidence', [IssueController::class, 'upload'])->middleware('throttle:evidence');
+    Route::get('/analytics/projects', [AnalyticsController::class, 'comparison']);
+    Route::get('/projects/{project}/analytics', [AnalyticsController::class, 'show']);
+    Route::get('/projects/{project}/reports/export', [AnalyticsController::class, 'export']);
     Route::get('/projects/{project}/evidence/{evidence}', [IssueController::class, 'download'])->whereNumber('evidence');
 });
