@@ -8,12 +8,11 @@ use App\Models\TestRun;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
 class RunService
 {
-    public function __construct(private ProjectService $audit) {}
+    public function __construct(private ProjectService $audit, private EvidenceService $evidence) {}
 
     public function create(Project $project, User $actor, array $data): TestRun
     {
@@ -78,7 +77,9 @@ class RunService
             return $result;
         });
 
-        return [...$run->toArray(), 'participants' => $participants, 'cases' => $cases, 'results' => $results, 'progress' => ['done' => $results->where('status', '!=', 'pending')->count(), 'passed' => $results->where('status', 'passed')->count(), 'total' => $results->count()]];
+        $issues = DB::table('issues')->where('test_run_id', $run->id)->whereNotNull('step_result_id')->get(['id', 'number', 'status', 'severity', 'step_result_id']);
+
+        return [...$run->toArray(), 'participants' => $participants, 'cases' => $cases, 'results' => $results, 'issues' => $issues, 'evidence' => $this->evidence->present($run->project_id, runId: $run->id), 'progress' => ['done' => $results->where('status', '!=', 'pending')->count(), 'passed' => $results->where('status', 'passed')->count(), 'total' => $results->count()]];
     }
 
     public function saveResult(Project $project, TestRun $run, User $actor, int $resultId, array $data): void
@@ -126,7 +127,7 @@ class RunService
 
     private function hasEvidence(int $resultId, int $actorId): bool
     {
-        return Schema::hasTable('evidence_files') && DB::table('evidence_files')->where('step_result_id', $resultId)->where('uploaded_by', $actorId)->exists();
+        return DB::table('evidence_files')->where('step_result_id', $resultId)->where('uploaded_by', $actorId)->exists();
     }
 
     public function transition(Project $project, TestRun $run, User $actor, array $data): void

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\IssueController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RunController;
 use App\Http\Controllers\ScenarioController;
@@ -40,4 +41,16 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::put('/projects/{project}/runs/{run}/results/{result}', [RunController::class, 'result']);
     Route::post('/projects/{project}/runs/{run}/transition', [RunController::class, 'transition']);
     Route::get('/projects/{project}/runs/{run}/history', [RunController::class, 'history']);
+    Route::get('/projects/{project}/issues', [IssueController::class, 'index']);
+    Route::get('/projects/{project}/issues-summary', [IssueController::class, 'summary']);
+    Route::post('/projects/{project}/issues', [IssueController::class, 'store']);
+    Route::get('/projects/{project}/issues/{issue}', [IssueController::class, 'show'])->whereNumber('issue');
+    Route::patch('/projects/{project}/issues/{issue}', [IssueController::class, 'update'])->whereNumber('issue');
+    Route::post('/projects/{project}/issues/{issue}/transition', [IssueController::class, 'transition'])->whereNumber('issue');
+    Route::post('/projects/{project}/issues/{issue}/comments', [IssueController::class, 'comment'])->whereNumber('issue');
+    Route::get('/projects/{project}/retests/mine', [IssueController::class, 'myRetests']);
+    Route::put('/projects/{project}/retests/{retest}', [IssueController::class, 'recordRetest'])->whereNumber('retest');
+    Route::put('/projects/{project}/retests/{retest}/assignee', [IssueController::class, 'reassignRetest'])->whereNumber('retest');
+    Route::post('/projects/{project}/evidence', [IssueController::class, 'upload'])->middleware('throttle:evidence');
+    Route::get('/projects/{project}/evidence/{evidence}', [IssueController::class, 'download'])->whereNumber('evidence');
 });

@@ -41,6 +41,7 @@ import type { Page, Project, User } from "./api";
 import { TestManagement } from "./testing/TestManagement";
 import { ProjectMaintenance } from "./testing/ProjectMaintenance";
 import { RunManagement } from "./testing/RunManagement";
+import { IssueManagement } from "./issues/IssueManagement";
 
 const client = new QueryClient({
   defaultOptions: {
@@ -579,6 +580,7 @@ function ProjectDetail() {
       <nav className="tabs" aria-label="أقسام المشروع">
         <NavLink to={`/projects/${id}/runs`}>جلسات الاختبار</NavLink>
         <NavLink to={`/projects/${id}/tests`}>الاختبارات</NavLink>
+        <NavLink to={`/projects/${id}/issues`}>المشكلات</NavLink>
         <NavLink to={`/projects/${id}`} end>
           نظرة عامة
         </NavLink>
@@ -590,6 +592,7 @@ function ProjectDetail() {
       <Routes>
         <Route path="runs/*" element={<RunManagement project={p} />} />
         <Route path="tests/*" element={<TestManagement project={p} />} />
+        <Route path="issues/*" element={<IssueManagement project={p} />} />
         <Route index element={<ProjectOverview project={p} />} />
         <Route path="team" element={<Team project={p} />} />
         <Route
