@@ -28,6 +28,7 @@ x-app: &app
     CACHE_STORE: database
     QUEUE_CONNECTION: database
     FILESYSTEM_DISK: local
+    EVIDENCE_MAX_PROJECT_BYTES: ${EVIDENCE_MAX_PROJECT_BYTES:-5368709120}
   restart: unless-stopped
   volumes:
     - private_storage:/var/www/html/storage
