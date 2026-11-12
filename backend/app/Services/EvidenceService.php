@@ -80,6 +80,7 @@ class EvidenceService
                 }
                 $column = $issueId ? 'issue_id' : ($stepResultId ? 'step_result_id' : 'retest_attempt_id');
                 abort_if(DB::table('evidence_files')->where($column, $issueId ?? $stepResultId ?? $retestId)->count() >= config('evidence.max_per_owner'), 422, 'بلغ هذا العنصر الحد الأقصى للأدلة.');
+                abort_if((int) DB::table('evidence_files')->where('project_id', $project->id)->sum('size') + $size > config('evidence.max_project_bytes'), 422, 'بلغ المشروع الحد الأقصى لمساحة الأدلة.');
                 $id = DB::table('evidence_files')->insertGetId([
                     'project_id' => $project->id, 'issue_id' => $issueId, 'step_result_id' => $stepResultId, 'retest_attempt_id' => $retestId,
                     'uploaded_by' => $actor->id, 'kind' => $kind, 'path' => $stored,

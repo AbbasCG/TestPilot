@@ -15,6 +15,7 @@ return [
     ],
     'max_image_pixels' => 16_000_000,
     'max_per_owner' => 20,
+    'max_project_bytes' => (int) env('EVIDENCE_MAX_PROJECT_BYTES', 5 * 1024 * 1024 * 1024),
     'types' => [
         'screenshot' => [
             'image/jpeg' => 'jpg',

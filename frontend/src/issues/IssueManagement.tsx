@@ -15,7 +15,7 @@ export function IssueManagement({ project }: { project: Project }) {
     <Routes>
       <Route index element={<IssueDashboard project={project} />} />
       <Route path="new" element={<CreateIssue project={project} />} />
-      <Route path=":issueId" element={<IssueDetail project={project} />} />
+      <Route path=":issueId" element={<KeyedIssueDetail project={project} />} />
       <Route path=":issueId/retest" element={<RetestScreen project={project} />} />
     </Routes>
   );
@@ -406,6 +406,12 @@ function IssueForm({ project: p, prefill, resultId, run, onCreated, error }: { p
       </form>
     </>
   );
+}
+
+// Keyed by route id so edit/workflow drafts never carry over to another issue.
+function KeyedIssueDetail({ project }: { project: Project }) {
+  const { issueId } = useParams();
+  return <IssueDetail key={issueId} project={project} />;
 }
 
 function IssueDetail({ project: p }: { project: Project }) {

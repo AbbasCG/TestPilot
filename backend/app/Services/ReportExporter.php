@@ -96,9 +96,22 @@ class ReportExporter
         return $rows;
     }
 
+    /**
+     * Neutralises user-controlled text for a Markdown table cell: HTML is
+     * encoded and Markdown metacharacters are escaped, so titles cannot
+     * inject links, images, raw HTML or break the table.
+     */
     private function md(mixed $value): string
     {
-        return str_replace(['|', "\r", "\n"], ['\\|', ' ', ' '], (string) ($value ?? '—'));
+        $text = str_replace(["\r", "\n"], ' ', (string) ($value ?? '—'));
+        $text = htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+        $escape = [];
+        foreach (str_split('\\`*_[]()!#|~>-') as $character) {
+            $escape[$character] = '\\'.$character;
+        }
+
+        return strtr($text, $escape);
     }
 
     /**
@@ -115,7 +128,7 @@ class ReportExporter
             "| إعادة اختبار ناجحة / فاشلة / معلّقة | {$report['retests']['passed']} / {$report['retests']['failed']} / {$report['retests']['pending']} |", ''];
         if ($report['readiness']) {
             $readiness = $report['readiness'];
-            $out = [...$out, "## جاهزية الإصدار `{$this->md($readiness['build'])}`: ".self::READINESS[$readiness['status']], '', '| الشرط | النتيجة | التفاصيل |', '|---|---|---|'];
+            $out = [...$out, '## جاهزية الإصدار '.$this->md($readiness['build']).': '.self::READINESS[$readiness['status']], '', '| الشرط | النتيجة | التفاصيل |', '|---|---|---|'];
             foreach ($readiness['checks'] as $check) {
                 $out[] = '| '.$this->md($check['label']).' | '.($check['passed'] ? '✔ متحقق' : '✘ غير متحقق').' | '.$this->md($check['detail']).' |';
             }

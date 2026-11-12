@@ -96,7 +96,9 @@ class AnalyticsService
         $runs = DB::table('run_participants')->join('test_runs', 'test_runs.id', '=', 'run_participants.test_run_id')->where('test_runs.project_id', $projectId)->selectRaw('user_id, count(*) as total')->groupBy('user_id')->pluck('total', 'user_id');
         $reported = DB::table('issues')->where('project_id', $projectId)->selectRaw('reporter_id, count(*) as total')->groupBy('reporter_id')->pluck('total', 'reporter_id');
         $retests = DB::table('retest_attempts')->where('project_id', $projectId)->whereIn('status', ['passed', 'failed'])->selectRaw('assignee_id, count(*) as total')->groupBy('assignee_id')->pluck('total', 'assignee_id');
-        $fixed = DB::table('issues')->where('project_id', $projectId)->whereIn('status', ['verified', 'closed'])->whereNotNull('assignee_id')->selectRaw('assignee_id, count(*) as total')->groupBy('assignee_id')->pluck('total', 'assignee_id');
+        // Credited only when an independent retest passed; wont_fix/duplicate closures are not fixes.
+        $fixed = DB::table('retest_attempts')->join('issues', 'issues.id', '=', 'retest_attempts.issue_id')->where('issues.project_id', $projectId)->where('retest_attempts.status', 'passed')->whereNotNull('issues.assignee_id')
+            ->selectRaw('issues.assignee_id, count(distinct issues.id) as total')->groupBy('issues.assignee_id')->pluck('total', 'assignee_id');
 
         return $members->map(function ($member) use ($steps, $runs, $reported, $retests, $fixed) {
             $byStatus = collect($steps[$member->id] ?? [])->pluck('total', 'status')->map(fn ($v) => (int) $v);
@@ -137,8 +139,10 @@ class AnalyticsService
     }
 
     /**
-     * Daily series built from append-only result history (the latest
-     * recorded state of each result on each day) and issue timestamps.
+     * Daily series built from append-only result history, counting only the
+     * latest recorded state of each step result on each day (a same-day
+     * correction replaces the earlier state), plus issues opened and issues
+     * whose fix was verified by a passed retest.
      *
      * @return list<array<string, mixed>>
      */
@@ -147,13 +151,14 @@ class AnalyticsService
         $start = CarbonImmutable::today()->subDays($days - 1);
         $recorded = DB::table('result_history')->join('step_results', 'step_results.id', '=', 'result_history.step_result_id')->join('test_runs', 'test_runs.id', '=', 'step_results.test_run_id')
             ->where('test_runs.project_id', $projectId)->where('result_history.created_at', '>=', $start)
-            ->get(['result_history.created_at', 'result_history.content'])
+            ->get(['result_history.step_result_id', 'result_history.version', 'result_history.created_at', 'result_history.content'])
             ->groupBy(fn ($row) => substr((string) $row->created_at, 0, 10))
-            ->map(fn ($rows) => $rows->countBy(fn ($row) => json_decode($row->content, true)['status'] ?? 'unknown'));
+            ->map(fn ($rows) => $rows->groupBy('step_result_id')->map(fn ($versions) => $versions->sortByDesc('version')->first())
+                ->countBy(fn ($row) => json_decode($row->content, true)['status'] ?? 'unknown'));
         $opened = DB::table('issues')->where('project_id', $projectId)->where('created_at', '>=', $start)->get(['created_at'])->countBy(fn ($row) => substr((string) $row->created_at, 0, 10));
         $resolved = DB::table('issue_activities')->join('issues', 'issues.id', '=', 'issue_activities.issue_id')->where('issues.project_id', $projectId)
             ->where('issue_activities.event', 'status_changed')->where('issue_activities.created_at', '>=', $start)->get(['issue_activities.created_at', 'issue_activities.metadata'])
-            ->filter(fn ($row) => in_array(json_decode($row->metadata, true)['to'] ?? null, ['verified', 'closed'], true))
+            ->filter(fn ($row) => (json_decode($row->metadata, true)['to'] ?? null) === 'verified')
             ->countBy(fn ($row) => substr((string) $row->created_at, 0, 10));
         $series = [];
         for ($day = $start; $day->lte(CarbonImmutable::today()); $day = $day->addDay()) {
@@ -184,7 +189,7 @@ class AnalyticsService
             ['key' => 'pass_rate', 'label' => 'نسبة النجاح لا تقل عن '.self::READINESS_MIN_PASS_RATE.'%', 'passed' => $results['pass_rate'] !== null && $results['pass_rate'] >= self::READINESS_MIN_PASS_RATE, 'detail' => $results['pass_rate'] === null ? 'لا نتائج منفذة' : $results['pass_rate'].'%'],
             ['key' => 'no_pending_steps', 'label' => 'لا خطوات غير منفذة', 'passed' => $results['pending'] === 0, 'detail' => (string) $results['pending']],
             ['key' => 'no_critical_issues', 'label' => 'لا مشكلات حرجة أو معطِّلة مفتوحة في المشروع', 'passed' => $criticalOpen === 0, 'detail' => (string) $criticalOpen],
-            ['key' => 'no_pending_retests', 'label' => 'لا إعادة اختبار معلّقة أو مشكلات أعيد فتحها', 'passed' => $pendingRetests === 0 && $reopened === 0, 'detail' => "$pendingRetests معلّقة · $reopened أعيد فتحها"],
+            ['key' => 'no_pending_retests', 'label' => 'لا إعادة اختبار معلّقة أو مشكلات أعيد فتحها في المشروع', 'passed' => $pendingRetests === 0 && $reopened === 0, 'detail' => "$pendingRetests معلّقة · $reopened أعيد فتحها"],
         ];
         $failed = collect($checks)->where('passed', false)->pluck('key');
         $blocking = $failed->intersect(['runs_exist', 'no_failed_runs', 'no_critical_issues'])->isNotEmpty();

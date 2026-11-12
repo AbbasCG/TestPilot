@@ -70,7 +70,7 @@ class AnalyticsReportTest extends TestCase
         $markdown = $this->get("/api/projects/$p/reports/export?format=md")->assertOk()->getContent();
         $this->assertStringContainsString('# تقرير جودة: Collaboration', $markdown);
         $this->assertStringContainsString('غير جاهز', $markdown);
-        $this->assertStringContainsString('=HYPERLINK("http://evil")', $markdown);
+        $this->assertStringContainsString('=HYPERLINK\(&quot;http://evil&quot;\)', $markdown);
 
         $this->getJson("/api/projects/$p/reports/export?format=exe")->assertUnprocessable();
         $this->assertSame(4, DB::table('activity_logs')->where('project_id', $p)->where('action', 'report.exported')->count());

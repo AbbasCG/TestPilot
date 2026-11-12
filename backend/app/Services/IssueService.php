@@ -85,7 +85,7 @@ class IssueService
                 $issue->environment_snapshot = json_decode($result->environment_snapshot, true);
                 $issue->build_version = $data['build_version'] ?? $result->run_build;
             } elseif (! empty($data['environment_id'])) {
-                $environment = $project->environments()->findOrFail($data['environment_id']);
+                $environment = $project->environments()->where('archived', false)->findOrFail($data['environment_id']);
                 $issue->environment_id = $environment->id;
                 $issue->environment_snapshot = $environment->only(['id', 'name', 'url']);
             }
@@ -109,6 +109,8 @@ class IssueService
             abort_unless($this->isManager($project, $actor) || $issue->reporter_id === $actor->id, 403, 'يعدّل المبلّغ أو مدير المشروع بيانات المشكلة فقط.');
             abort_if($issue->status === 'closed', 409, 'أعد فتح المشكلة قبل تعديلها.');
             $fields = collect($data)->only($issue->getFillable())->all();
+            $reclassifies = collect(['severity', 'priority'])->contains(fn ($key) => isset($fields[$key]) && $fields[$key] !== $issue->$key);
+            abort_if($reclassifies && $issue->status !== 'new' && ! $this->isManager($project, $actor), 403, 'بعد الفرز يغيّر مدير المشروع وحده الخطورة والأولوية.');
             $issue->fill($fields);
             $changed = array_keys($issue->getDirty());
             if ($changed === []) {
@@ -154,7 +156,7 @@ class IssueService
             }
             if ($to === 'duplicate') {
                 $original = Issue::where('project_id', $project->id)->find($data['duplicate_of_id'] ?? 0);
-                if (! $original || $original->id === $issue->id || $original->duplicate_of_id === $issue->id) {
+                if (! $original || $this->duplicateChainReaches($original, $issue->id)) {
                     throw ValidationException::withMessages(['duplicate_of_id' => 'اختر مشكلة أصلية مختلفة داخل المشروع.']);
                 }
                 $issue->duplicate_of_id = $original->id;
@@ -176,6 +178,8 @@ class IssueService
             }
             if (in_array($to, ['ready_for_retest', 'wont_fix', 'deferred', 'duplicate'], true)) {
                 $issue->resolution = $note;
+            } elseif ($to === 'reopened') {
+                $issue->resolution = null;
             }
             $issue->closed_at = $to === 'closed' ? now() : null;
             $issue->status = $to;
@@ -201,8 +205,11 @@ class IssueService
         }
         $tester = (int) $data['retest_assignee_id'];
         $this->assertWorker($project, $tester);
-        if ($tester === $issue->assignee_id) {
-            throw ValidationException::withMessages(['retest_assignee_id' => 'يجب أن يتحقق من الإصلاح مختبر غير المكلَّف بالإصلاح.']);
+        if ($issue->assignee_id === null) {
+            throw ValidationException::withMessages(['retest_assignee_id' => 'أسند المشكلة إلى مكلَّف بالإصلاح قبل طلب إعادة الاختبار.']);
+        }
+        if ($tester === $issue->assignee_id || $tester === $actor->id) {
+            throw ValidationException::withMessages(['retest_assignee_id' => 'يجب أن يتحقق من الإصلاح مختبر مستقل غير المكلَّف بالإصلاح وغير طالب إعادة الاختبار.']);
         }
         $environmentId = $data['environment_id'] ?? $issue->environment_id;
         if ($environmentId) {
@@ -227,6 +234,22 @@ class IssueService
         $this->activity($issue, $actor, 'retest_requested', ['retest_id' => $attempt->id, 'attempt' => $attempt->attempt_number, 'assignee_id' => $tester, 'build_version' => $attempt->build_version]);
 
         return $attempt;
+    }
+
+    /**
+     * Follows the duplicate_of chain from $start; true when it reaches $issueId (a cycle).
+     */
+    private function duplicateChainReaches(Issue $start, int $issueId): bool
+    {
+        $current = $start;
+        for ($hops = 0; $current && $hops < 100; $hops++) {
+            if ($current->id === $issueId) {
+                return true;
+            }
+            $current = $current->duplicate_of_id ? Issue::find($current->duplicate_of_id) : null;
+        }
+
+        return $current !== null;
     }
 
     public function comment(Project $project, int $issueId, User $actor, string $body): void
@@ -278,7 +301,7 @@ class IssueService
             abort_unless($attempt->status === 'pending', 409, 'لا يمكن إعادة تعيين محاولة مكتملة.');
             abort_if($attempt->version !== $version, 409, 'تغيرت محاولة إعادة الاختبار. حدّث الصفحة.');
             $this->assertWorker($project, $assigneeId);
-            if ($assigneeId === $issue->assignee_id) {
+            if ($assigneeId === $issue->assignee_id || $assigneeId === $attempt->requested_by) {
                 throw ValidationException::withMessages(['assignee_id' => 'يجب أن يتحقق من الإصلاح مختبر غير المكلَّف بالإصلاح.']);
             }
             $previous = $attempt->assignee_id;

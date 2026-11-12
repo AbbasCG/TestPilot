@@ -93,6 +93,7 @@ class RunService
             abort_unless($result, 404);
             $participant = DB::table('run_participants')->find($result->participant_id);
             abort_unless($participant->user_id === $actor->id, 403, 'يمكنك اعتماد خطواتك فقط.');
+            abort_if(DB::table('issues')->where('step_result_id', $resultId)->exists(), 409, 'هذه النتيجة مرتبطة بمشكلة؛ يُتحقق من الإصلاح بإعادة الاختبار ولا تُعدّل النتيجة الأصلية.');
             abort_if($result->version !== (int) $data['version'], 409, 'تغيرت النتيجة. حدّث البيانات قبل الحفظ.');
             $case = DB::table('run_cases')->find($result->run_case_id);
             $snapshot = json_decode($case->snapshot, true, flags: JSON_THROW_ON_ERROR);
