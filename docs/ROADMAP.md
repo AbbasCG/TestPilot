@@ -12,4 +12,30 @@
 
 ## Full phase registry (source pending)
 
-PHASE 0–22: awaiting full text; no milestone mapping claimed. Keep all 23 phases listed here until the official reference is supplied and mapped in REQUIREMENTS_TRACEABILITY.md.
+No milestone mapping is claimed. Keep all 23 phases listed until the official reference is supplied and mapped in REQUIREMENTS_TRACEABILITY.md.
+
+| Official phase | Source | Milestone assignment |
+|---|---|---|
+| PHASE 0 | Awaiting full text | Pending |
+| PHASE 1 | Awaiting full text | Pending |
+| PHASE 2 | Awaiting full text | Pending |
+| PHASE 3 | Awaiting full text | Pending |
+| PHASE 4 | Awaiting full text | Pending |
+| PHASE 5 | Awaiting full text | Pending |
+| PHASE 6 | Awaiting full text | Pending |
+| PHASE 7 | Awaiting full text | Pending |
+| PHASE 8 | Awaiting full text | Pending |
+| PHASE 9 | Awaiting full text | Pending |
+| PHASE 10 | Awaiting full text | Pending |
+| PHASE 11 | Awaiting full text | Pending |
+| PHASE 12 | Awaiting full text | Pending |
+| PHASE 13 | Awaiting full text | Pending |
+| PHASE 14 | Awaiting full text | Pending |
+| PHASE 15 | Awaiting full text | Pending |
+| PHASE 16 | Awaiting full text | Pending |
+| PHASE 17 | Awaiting full text | Pending |
+| PHASE 18 | Awaiting full text | Pending |
+| PHASE 19 | Awaiting full text | Pending |
+| PHASE 20 | Awaiting full text | Pending |
+| PHASE 21 | Awaiting full text | Pending |
+| PHASE 22 | Awaiting full text | Pending |
