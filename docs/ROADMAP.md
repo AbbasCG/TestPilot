@@ -8,7 +8,9 @@
 6. M7 Tharaa — import command and 13 scenarios ready; THR-AUD-143 open as Known Issue. Execution on Demo by human testers is next.
 7. M8 quality — backend, Playwright, security and code reviews, concurrency, evidence security, a11y/RTL/responsive/dark sweeps done; axe/screen-reader audit and frontend unit runner not available.
 8. Operations — assets updated for uploads (GD, limits, evidence backups); image build, TLS, restore drill still unverified. No deployment or DNS changes without approval.
-9. Pending owner actions — merge branch, migrate dev DB, create owner account, run Tharaa import.
+9. Repository — GitHub origin, main/dev/feature flow, CI, rolling Arabic PR dev → main (owner merges).
+10. Typography — Thmanyah faces applied globally with licence-safe local files.
+11. Pending owner actions — review/merge PR dev → main, migrate dev DB (backup first), create owner account, run Tharaa import, two-browser manual test.
 
 ## Full phase registry (source pending)
 

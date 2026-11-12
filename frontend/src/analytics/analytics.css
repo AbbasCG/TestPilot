@@ -32,7 +32,7 @@
 .readiness-ready { border-top-color: var(--series-passed); }
 .readiness-at_risk { border-top-color: var(--series-blocked); }
 .readiness-not_ready { border-top-color: var(--series-failed); }
-.readiness-verdict { display: flex; gap: 8px; align-items: center; font-size: 18px; font-weight: 750; margin: 6px 0 12px; }
+.readiness-verdict { display: flex; gap: 8px; align-items: center; font-size: 18px; font-weight: 700; margin: 6px 0 12px; }
 .readiness-ready .readiness-verdict svg { color: var(--series-passed); }
 .readiness-at_risk .readiness-verdict svg { color: var(--series-blocked); }
 .readiness-not_ready .readiness-verdict svg { color: var(--series-failed); }
@@ -92,7 +92,7 @@
 .panel + .panel { margin-top: 22px; }
 
 .print-report .print-header { margin-bottom: 22px; }
-.print-report .print-header .print-title { margin: 4px 0; font-size: 26px; }
+.print-report .print-header .print-title { margin: 4px 0; font-family: var(--font-display); font-size: 30px; font-weight: 700; }
 
 @media (max-width: 1300px) { .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 1050px) { .analytics-grid { grid-template-columns: 1fr; } }

@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Thmanyah fonts are licensed per machine and must not be redistributed (see src/fonts.ts)
+src/assets/fonts/thmanyah/*
+!src/assets/fonts/thmanyah/README.md

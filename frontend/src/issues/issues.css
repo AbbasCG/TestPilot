@@ -42,7 +42,7 @@
   padding: 2px 9px;
   border-radius: 999px;
   font-size: 11.5px;
-  font-weight: 650;
+  font-weight: 500;
   white-space: nowrap;
   background: var(--tint-grey);
   color: var(--muted);
@@ -77,7 +77,7 @@
   padding: 10px 14px;
   border-radius: 8px;
   border: 1px solid transparent;
-  font-weight: 600;
+  font-weight: 500;
 }
 .severity-bar::before { display: none; }
 .severity-bar.severity-trivial { background: var(--tint-grey); }
@@ -105,7 +105,7 @@
 .search-field input { padding-inline-start: 34px; }
 .issue-table td { vertical-align: top; }
 .issue-table td small { display: block; margin-top: 3px; font-size: 11.5px; }
-.issue-number { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--muted); }
+.issue-number { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
 
 .issue-heading { align-items: flex-end; }
 .issue-heading h2 { font-size: 22px; margin: 4px 0 8px; }
@@ -200,7 +200,7 @@
 .evidence-meta { padding: 8px 10px; display: grid; gap: 2px; font-size: 12px; min-width: 0; }
 .evidence-meta a { display: inline-flex; gap: 5px; align-items: center; overflow-wrap: anywhere; }
 .evidence-meta small { color: var(--muted); font-size: 11px; }
-.evidence-meta .hash { font-family: ui-monospace, monospace; font-size: 10px; }
+.evidence-meta .hash { font-family: var(--font-mono); font-size: 10px; }
 .evidence-empty { font-size: 13px; margin-bottom: 12px; }
 .evidence-upload {
   display: grid;
@@ -217,11 +217,11 @@
 .evidence-upload input[type="file"] { width: 100%; font-size: 12px; }
 .result-extras { margin-top: 12px; display: grid; gap: 10px; }
 .result-extras .evidence-gallery { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); margin: 0; }
-.evidence-toggle summary { cursor: pointer; font-size: 12px; font-weight: 600; color: #235cc7; }
+.evidence-toggle summary { cursor: pointer; font-size: 12px; font-weight: 500; color: #235cc7; }
 .app[data-theme="dark"] .evidence-toggle summary { color: #9fc0ff; }
 .linked-issue {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   padding: 6px 10px;
   border-radius: 6px;
   background: var(--tint-red);
