@@ -47,6 +47,12 @@ test("brand typography loads and applies to every element type on light/dark, de
         await expect(page.locator(".empty[role=status]")).toHaveCount(0, { timeout: 10_000 });
         await page.waitForLoadState("networkidle");
         await page.evaluate(() => document.fonts.ready);
+        // Faces load lazily; request them explicitly so the checks below never race the first paint.
+        const faces = await page.evaluate(async () => ({
+          sans: (await document.fonts.load('500 16px "Thmanyah Sans"', "ثراء")).length,
+          display: (await document.fonts.load('700 30px "Thmanyah Serif Display"', "ثراء")).length,
+          noto: (await document.fonts.load('16px "Noto Sans Arabic Variable"', "ثراء")).length,
+        }));
         const result = await page.evaluate(() => {
           const family = (selector: string) => {
             const el = document.querySelector(selector);
@@ -73,9 +79,12 @@ test("brand typography loads and applies to every element type on light/dark, de
         }
         expect.soft(result.h1, label).toMatch(/^"?Thmanyah Serif Display"?/);
         if (mode === "thmanyah") {
+          expect.soft(faces.sans, `${label} sans face`).toBeGreaterThan(0);
+          expect.soft(faces.display, `${label} display face`).toBeGreaterThan(0);
           expect.soft(result.sansLoaded, `${label} sans loaded`).toBe(true);
           expect.soft(result.displayLoaded, `${label} display loaded`).toBe(true);
         } else {
+          expect.soft(faces.noto, `${label} fallback face`).toBeGreaterThan(0);
           expect.soft(result.notoLoaded, `${label} fallback loaded`).toBe(true);
         }
         if (width === 390 || name === "dashboard" || name === "issues") {

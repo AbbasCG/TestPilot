@@ -22,9 +22,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Production default 5/min per account+IP; only the isolated browser-test server raises it.
+        $perAccount = max(1, (int) config('auth.login_attempts_per_minute', 5));
         RateLimiter::for('login', fn (Request $request) => [
-            Limit::perMinute(5)->by(strtolower((string) $request->input('email')).'|'.$request->ip()),
-            Limit::perMinute(30)->by($request->ip()),
+            Limit::perMinute($perAccount)->by(strtolower((string) $request->input('email')).'|'.$request->ip()),
+            Limit::perMinute($perAccount * 6)->by($request->ip()),
         ]);
         RateLimiter::for('evidence', fn (Request $request) => Limit::perMinute(20)->by($request->user()?->id ?: $request->ip()));
         RateLimiter::for('api', fn (Request $request) => Limit::perMinute(120)->by($request->user()?->id ?: $request->ip()));

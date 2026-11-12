@@ -271,7 +271,7 @@ function SuiteEditor({
         </div>
         <label>
           وصف المجموعة
-          <textarea
+          <textarea aria-label="وصف المجموعة"
             value={data.description}
             onChange={(e) => setData({ ...data, description: e.target.value })}
           />
@@ -591,7 +591,7 @@ function ScenarioEditor({
           {Object.entries(contentLabels).map(([key, label]) => (
             <label key={key}>
               {label}
-              <textarea
+              <textarea aria-label={label}
                 required={["objective", "acceptance_criteria"].includes(key)}
                 maxLength={10000}
                 rows={2}
@@ -776,7 +776,7 @@ function ScenarioEditor({
               </div>
               <label>
                 النتيجة المتوقعة للخطوة
-                <textarea
+                <textarea aria-label="النتيجة المتوقعة للخطوة"
                   required
                   maxLength={5000}
                   value={step.expected_result}
@@ -787,7 +787,7 @@ function ScenarioEditor({
               </label>
               <label>
                 تعليمات تفصيلية
-                <textarea
+                <textarea aria-label="تعليمات تفصيلية"
                   value={step.instructions || ""}
                   onChange={(e) =>
                     changeStep(index, { instructions: e.target.value })

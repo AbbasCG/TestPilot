@@ -112,6 +112,12 @@ return [
     |
     */
 
+    /*
+    | Login attempts allowed per minute for one e-mail and IP (IP-wide limit is
+    | six times this). Keep the default in every real environment.
+    */
+    'login_attempts_per_minute' => (int) env('LOGIN_ATTEMPTS_PER_MINUTE', 5),
+
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
 ];

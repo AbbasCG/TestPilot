@@ -346,20 +346,20 @@ function IssueForm({ project: p, prefill, resultId, run, onCreated, error }: { p
         </label>
         <label>
           الوصف
-          <textarea required minLength={3} maxLength={10000} value={form.description} onChange={update("description")} placeholder="ما الذي حدث ولماذا يُعد خطأ؟" />
+          <textarea aria-label="الوصف" required minLength={3} maxLength={10000} value={form.description} onChange={update("description")} placeholder="ما الذي حدث ولماذا يُعد خطأ؟" />
         </label>
         <label>
           خطوات إعادة الإنتاج
-          <textarea required minLength={3} maxLength={10000} rows={7} value={form.reproduction_steps} onChange={update("reproduction_steps")} />
+          <textarea aria-label="خطوات إعادة الإنتاج" required minLength={3} maxLength={10000} rows={7} value={form.reproduction_steps} onChange={update("reproduction_steps")} />
         </label>
         <div className="field-grid">
           <label>
             النتيجة المتوقعة
-            <textarea required minLength={3} maxLength={5000} value={form.expected_result} onChange={update("expected_result")} />
+            <textarea aria-label="النتيجة المتوقعة" required minLength={3} maxLength={5000} value={form.expected_result} onChange={update("expected_result")} />
           </label>
           <label>
             النتيجة الفعلية
-            <textarea required minLength={3} maxLength={5000} value={form.actual_result} onChange={update("actual_result")} />
+            <textarea aria-label="النتيجة الفعلية" required minLength={3} maxLength={5000} value={form.actual_result} onChange={update("actual_result")} />
           </label>
           <label>
             الخطورة
@@ -599,20 +599,20 @@ function IssueFields({ issue, project: p, onSaved }: { issue: Issue; project: Pr
       </label>
       <label>
         الوصف
-        <textarea required minLength={3} maxLength={10000} value={form.description} onChange={update("description")} />
+        <textarea aria-label="الوصف" required minLength={3} maxLength={10000} value={form.description} onChange={update("description")} />
       </label>
       <label>
         خطوات إعادة الإنتاج
-        <textarea required minLength={3} rows={6} maxLength={10000} value={form.reproduction_steps} onChange={update("reproduction_steps")} />
+        <textarea aria-label="خطوات إعادة الإنتاج" required minLength={3} rows={6} maxLength={10000} value={form.reproduction_steps} onChange={update("reproduction_steps")} />
       </label>
       <div className="field-grid">
         <label>
           النتيجة المتوقعة
-          <textarea required minLength={3} maxLength={5000} value={form.expected_result} onChange={update("expected_result")} />
+          <textarea aria-label="النتيجة المتوقعة" required minLength={3} maxLength={5000} value={form.expected_result} onChange={update("expected_result")} />
         </label>
         <label>
           النتيجة الفعلية
-          <textarea required minLength={3} maxLength={5000} value={form.actual_result} onChange={update("actual_result")} />
+          <textarea aria-label="النتيجة الفعلية" required minLength={3} maxLength={5000} value={form.actual_result} onChange={update("actual_result")} />
         </label>
         <label>
           الخطورة
@@ -755,7 +755,7 @@ function WorkflowPanel({ project: p, issue, onSaved }: { project: Project; issue
             <label>
               {to === "ready_for_retest" ? "وصف الإصلاح" : "ملاحظة"}
               {noteRequired.includes(to) ? "" : " (اختيارية)"}
-              <textarea required={noteRequired.includes(to)} minLength={noteRequired.includes(to) ? 3 : undefined} maxLength={5000} value={note} onChange={(e) => setNote(e.target.value)} />
+              <textarea aria-label={to === "ready_for_retest" ? "وصف الإصلاح" : "ملاحظة"} required={noteRequired.includes(to)} minLength={noteRequired.includes(to) ? 3 : undefined} maxLength={5000} value={note} onChange={(e) => setNote(e.target.value)} />
             </label>
           )}
           <button className="primary" disabled={!to || move.isPending}>
@@ -878,7 +878,7 @@ function Comments({ project: p, issue, onSaved }: { project: Project; issue: Iss
           <Notice error={send.error} />
           <label>
             تعليق جديد
-            <textarea required maxLength={5000} value={body} onChange={(e) => setBody(e.target.value)} />
+            <textarea aria-label="تعليق جديد" required maxLength={5000} value={body} onChange={(e) => setBody(e.target.value)} />
           </label>
           <button disabled={!body.trim() || send.isPending}>إضافة التعليق</button>
         </form>
@@ -1026,11 +1026,11 @@ function RetestScreen({ project: p }: { project: Project }) {
             </fieldset>
             <label>
               النتيجة الفعلية
-              <textarea required minLength={3} maxLength={10000} value={actual} onChange={(e) => setActual(e.target.value)} />
+              <textarea aria-label="النتيجة الفعلية" required minLength={3} maxLength={10000} value={actual} onChange={(e) => setActual(e.target.value)} />
             </label>
             <label>
               ملاحظات
-              <textarea maxLength={10000} value={notes} onChange={(e) => setNotes(e.target.value)} />
+              <textarea aria-label="ملاحظات" maxLength={10000} value={notes} onChange={(e) => setNotes(e.target.value)} />
             </label>
             <label className="check-label">
               <input type="checkbox" checked={verified} onChange={(e) => setVerified(e.target.checked)} /> نفّذت الخطوات فعليًا على الإصدار المحدد وتحققت من النتيجة
