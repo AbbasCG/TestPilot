@@ -28,7 +28,7 @@ Local-only branches such as `backup/*` and `claude/*` are never pushed.
 9. If no `dev` → `main` PR is open, open one. If one is open, it updates automatically with the new `dev` commits; update its description (results, risks, notes) instead of creating a duplicate.
 10. Never merge into `main` without the owner's explicit approval. Never deploy as part of this flow.
 
-Never: force push, `git reset --hard`, `git clean -fd`, rewriting published history, pushing failing or incomplete work as ready, or committing secrets, `.env`, `.local/`, `vendor/`, `node_modules/`, `dist/`, test artifacts, database dumps or licensed font files (`frontend/src/assets/fonts/thmanyah/*`).
+Never: force push, `git reset --hard`, `git clean -fd`, rewriting published history, pushing failing or incomplete work as ready, or committing secrets, `.env`, `.local/`, `vendor/`, `node_modules/`, `dist/`, test artifacts, or database dumps. The Thmanyah font files are committed with the owner's permission; keep them unmodified.
 
 ## Pull request description (Arabic)
 
@@ -55,7 +55,7 @@ PHPUnit / PostgreSQL / Playwright / TypeScript / ESLint / Build
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` runs on pushes to `main`/`dev` and on every PR: Pint, PostgreSQL 18 backend tests, ESLint/oxlint, TypeScript, Vite build (asserting no licensed fonts are bundled), and Playwright in Chromium against an isolated `testpilot_e2e` database. It needs no repository secrets; the database password is a CI-only value.
+`.github/workflows/ci.yml` runs on pushes to `main`/`dev` and on every PR: Pint, PostgreSQL 18 backend tests, ESLint/oxlint, TypeScript, Vite build (asserting all seven Thmanyah faces are bundled), and Playwright in Chromium against an isolated `testpilot_e2e` database. It needs no repository secrets; the database password is a CI-only value.
 
 ## Authentication
 

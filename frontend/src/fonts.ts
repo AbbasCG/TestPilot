@@ -1,11 +1,10 @@
 /*
- * Thmanyah typefaces (ثمانية). Licence: embedding in web applications is allowed
- * only as part of a bundled product; redistributing or hosting the font files
- * (including in a public Git repository) is not. The .woff2 files therefore live
- * in the git-ignored folder src/assets/fonts/thmanyah/ on each licensed machine
- * (download them from https://font.thmanyah.com). Vite bundles them with hashed
- * names at build time. When the folder is empty the glob below returns nothing
- * and the interface falls back to the bundled Noto Sans Arabic (OFL).
+ * Thmanyah typefaces (ثمانية) — the project's primary fonts. The owner confirmed
+ * on 2026-11-12 that TestPilot is permitted to use and include them; the licence
+ * text shipped inside the font files is kept next to them (LICENSE-thmanyah.txt).
+ * Files live in src/assets/fonts/thmanyah/ and Vite bundles them with hashed
+ * names. The glob keeps the app working (Noto Sans Arabic fallback) if a file is
+ * ever missing.
  */
 const files = import.meta.glob<string>("./assets/fonts/thmanyah/*.woff2", {
   eager: true,

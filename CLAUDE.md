@@ -21,4 +21,4 @@ Remote: https://github.com/AbbasCG/TestPilot (public). Follow docs/GIT_WORKFLOW.
 4. Merge into `dev` only after checks, review and owner approval; push `dev`.
 5. Keep exactly one open `dev` → `main` PR: open it if missing, otherwise update its description.
 6. Never merge into `main` without the owner's approval. No force push, no history rewrite, no deployment.
-Never push failing or incomplete work as ready, secrets, build output, `.local/`, backups, or the licensed Thmanyah font files (git-ignored under frontend/src/assets/fonts/thmanyah/).
+Never push failing or incomplete work as ready, secrets, build output, `.local/` or backups. The Thmanyah fonts in frontend/src/assets/fonts/thmanyah/ are committed with the owner's permission (2026-11-12); do not modify or rename them.

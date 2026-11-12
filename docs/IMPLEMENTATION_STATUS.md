@@ -17,7 +17,8 @@ Sources: FOUNDATION_REQUEST.md (M1–M4), CONTINUATION_REQUIREMENTS.md (M2–M5)
 ## Repository and typography (2026-11-12, second session)
 
 - GitHub: https://github.com/AbbasCG/TestPilot. `main` = stable base 7cb15eb (M1–M4); `dev` = M5–M8 plus the typography/workflow work; PR `dev` → `main` open for owner review. Policy in GIT_WORKFLOW.md and CLAUDE.md. CI runs on PRs and pushes to main/dev.
-- Typography: Thmanyah Sans / Thmanyah Serif Display applied to every screen through `src/fonts.ts` and Tailwind tokens; licensed files kept out of Git; Noto Sans Arabic fallback; verified by e2e/typography.spec.ts.
+- Typography: Thmanyah Sans / Thmanyah Serif Display applied to every screen through `src/fonts.ts` and Tailwind tokens; the font files are committed with the owner's permission; Noto Sans Arabic fallback; verified by e2e/typography.spec.ts and a CI bundle check.
+- CI fixes: stable accessible names for all labelled textareas (Chromium included typed text in the name), and a configurable login throttle (`LOGIN_ATTEMPTS_PER_MINUTE`, default 5) raised only for the isolated E2E server.
 - Codex's uncommitted M5 draft: backed up (`.local/backups/codex-m5-draft-20261112`, local branch `backup/codex-m5-draft`), moved out of the main working tree; no unique work worth merging.
 
 ## Verification (first session, worktree branch)
