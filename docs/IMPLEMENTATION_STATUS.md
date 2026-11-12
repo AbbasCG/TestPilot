@@ -14,6 +14,12 @@ Sources: FOUNDATION_REQUEST.md (M1–M4), CONTINUATION_REQUIREMENTS.md (M2–M5)
 - M7 Tharaa: `php artisan testpilot:import-tharaa owner@email [--dry-run]` — additive, idempotent, never creates accounts or touches Tharaa. 6 suites, 13 scenarios from Tharaa's verified demo scenario document (b7785e2), each with A/B steps, prerequisites, test data, expected results and shared checkpoints, starting with TEST-TEACHER-001. THR-AUD-143 imported as an open, triaged Known Issue. Kifah tours scenario is a draft because the tours are not deployed on Demo (Tharaa doc B11).
 - M8: review-driven hardening (see CLAUDE_HANDOFF), concurrency/security/accessibility Playwright gates, deployment asset fixes for uploads.
 
+## Local readiness (2026-11-12)
+
+- `main` (6b7067a) contains M1–M8, fonts and workflow; GitHub Actions green.
+- Development database migrated to the M5 schema after a verified pg_dump backup; no accounts yet (owner-created via `testpilot:user`).
+- Arabic two-browser runbook: LOCAL_TESTING_GUIDE_AR.md; project-local PHP upload limits for `artisan serve`.
+
 ## Repository and typography (2026-11-12, second session)
 
 - GitHub: https://github.com/AbbasCG/TestPilot. `main` = stable base 7cb15eb (M1–M4); `dev` = M5–M8 plus the typography/workflow work; PR `dev` → `main` open for owner review. Policy in GIT_WORKFLOW.md and CLAUDE.md. CI runs on PRs and pushes to main/dev.

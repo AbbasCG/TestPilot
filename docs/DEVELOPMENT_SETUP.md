@@ -55,6 +55,9 @@ The interface uses Thmanyah Sans (300/400/500/700/900) and Thmanyah Serif Displa
 
 ## Manual two-browser test (local)
 
+Full Arabic step-by-step guide: [LOCAL_TESTING_GUIDE_AR.md](LOCAL_TESTING_GUIDE_AR.md). Local uploads above XAMPP's 2 MB limit: start the API with `$env:PHP_INI_SCAN_DIR = "D:\Projects\TestPilot\infra\php-local"` (project-local ini, XAMPP untouched).
+
+
 1. Start PostgreSQL (`infra/dev-db.ps1 start`), then in `backend`: `php artisan serve --host=127.0.0.1 --port=8000`; in `frontend`: `npm run dev`. Open http://127.0.0.1:5173.
 2. Create accounts with `php artisan testpilot:user <email> --name="<name>"` (password typed hidden, at least 12 characters). Use two different browsers or one normal + one private window.
 3. Owner: create a project, add an environment, add the second account as `tester` under أعضاء الفريق.
