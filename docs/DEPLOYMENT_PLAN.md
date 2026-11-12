@@ -35,3 +35,12 @@ Keep previous tagged API/web images and release metadata. Revert application ima
 Health checks: DB pg_isready; API FPM socket; web DB-aware endpoint. Process restarts: unless-stopped, worker periodic recycle. Queue heartbeat is cached every five minutes; alerts/monitoring and log rotation are still pending. Capture deployment logs without credentials, set Docker log size/retention before production.
 
 Current readiness: Compose syntax validated with dummy secrets; no container build, TLS test, backup restore drill or remote deployment. CI definition exists locally but has not run on GitHub. Application M3–M4 and master-reference alignment are prerequisites to claiming product readiness.
+
+## M5 upload readiness (2026-11-12, prepared only)
+
+- API image now builds GD (JPEG/WebP) — required: screenshots are decoded and re-encoded; without GD every screenshot is rejected.
+- PHP: `upload_max_filesize=42M`, `post_max_size=44M`, `memory_limit=256M`, `expose_php=Off`.
+- Internal Nginx: 2 MB body limit everywhere except `POST /api/projects/{id}/evidence` (44 MB). The edge example sets `client_max_body_size 44m`.
+- Evidence lives in the `private_storage` volume (never served by Nginx); `backup.sh` now also writes `testpilot-evidence-<stamp>.tar.gz`. Restore both the dump and the archive together; keep APP_KEY.
+- `EVIDENCE_MAX_PROJECT_BYTES` (default 5 GiB) caps evidence per project.
+- Queue and scheduler services unchanged; M5–M7 add no queued jobs. Health, HTTPS and DNS steps unchanged and unexecuted. Docker daemon unavailable locally: image build still unverified.
