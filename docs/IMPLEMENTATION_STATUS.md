@@ -14,7 +14,13 @@ Sources: FOUNDATION_REQUEST.md (M1–M4), CONTINUATION_REQUIREMENTS.md (M2–M5)
 - M7 Tharaa: `php artisan testpilot:import-tharaa owner@email [--dry-run]` — additive, idempotent, never creates accounts or touches Tharaa. 6 suites, 13 scenarios from Tharaa's verified demo scenario document (b7785e2), each with A/B steps, prerequisites, test data, expected results and shared checkpoints, starting with TEST-TEACHER-001. THR-AUD-143 imported as an open, triaged Known Issue. Kifah tours scenario is a draft because the tours are not deployed on Demo (Tharaa doc B11).
 - M8: review-driven hardening (see CLAUDE_HANDOFF), concurrency/security/accessibility Playwright gates, deployment asset fixes for uploads.
 
-## Verification (this session, worktree branch)
+## Repository and typography (2026-11-12, second session)
+
+- GitHub: https://github.com/AbbasCG/TestPilot. `main` = stable base 7cb15eb (M1–M4); `dev` = M5–M8 plus the typography/workflow work; PR `dev` → `main` open for owner review. Policy in GIT_WORKFLOW.md and CLAUDE.md. CI runs on PRs and pushes to main/dev.
+- Typography: Thmanyah Sans / Thmanyah Serif Display applied to every screen through `src/fonts.ts` and Tailwind tokens; licensed files kept out of Git; Noto Sans Arabic fallback; verified by e2e/typography.spec.ts.
+- Codex's uncommitted M5 draft: backed up (`.local/backups/codex-m5-draft-20261112`, local branch `backup/codex-m5-draft`), moved out of the main working tree; no unique work worth merging.
+
+## Verification (first session, worktree branch)
 
 - PostgreSQL (`testpilot_test`): 36 tests, 513 assertions pass.
 - TypeScript, ESLint/oxlint (2 pre-existing Fast Refresh warnings), production build pass.

@@ -1,6 +1,14 @@
 # Claude handoff — 2026-11-12
 
-## Resume here
+## Update — second session (2026-11-12)
+
+- Remote `origin` = https://github.com/AbbasCG/TestPilot (public). Branches: `main` (7cb15eb, stable M1–M4), `dev` (M5–M8 + typography + workflow), task branch `feature/global-fonts` merged into `dev`. Open PR `dev` → `main` with an Arabic description; do not merge without the owner. Follow GIT_WORKFLOW.md from now on.
+- Not pushed by design: `backup/codex-m5-draft`, `claude/testpilot-m5-m8-continuation-3a6bcd`, `.local/`, licensed fonts.
+- Main checkout `D:\Projects\TestPilot` is clean on `main`; Codex draft files were moved to `.local/backups/codex-m5-draft-20261112/moved-from-worktree` after hash verification.
+- Fonts: see DEVELOPMENT_SETUP.md › Fonts. The main checkout already has the font files under `frontend/src/assets/fonts/thmanyah/` (ignored); the originals in `frontend/dist/fonts` are backed up in `.local/backups/fonts-thmanyah-original-20261112`.
+- Dev database still not migrated to M5 and has no accounts: after the PR is merged (or by checking out `dev`), back up with pg_dump, run `php artisan migrate`, create the owner with `testpilot:user`, then `testpilot:import-tharaa`.
+
+## Resume here (first session)
 
 Work happened in the git worktree `D:\Projects\TestPilot\.claude\worktrees\testpilot-m5-m8-continuation-3a6bcd` on branch `claude/testpilot-m5-m8-continuation-3a6bcd`, starting from 7cb15eb. Commits on that branch (get exact hashes with `git log --oneline 7cb15eb..HEAD`): M5 issues/evidence/retests, M6 analytics/exports, scenario prerequisite fix, M7 Tharaa import, M8 review hardening + quality gates, deployment assets + docs. Nothing is merged into `main` and nothing is pushed. No remote exists.
 
