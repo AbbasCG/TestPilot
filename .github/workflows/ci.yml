@@ -1,10 +1,19 @@
 name: TestPilot checks
-on: [push, pull_request]
+# Runs on pushes to the long-lived branches and on every pull request (feature/* and fix/* are checked through their PRs).
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+  workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     services:
       postgres:
         image: postgres:18
@@ -27,7 +36,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: pdo_pgsql, mbstring, bcmath
+          extensions: pdo_pgsql, mbstring, bcmath, gd, fileinfo, intl
           coverage: none
       - uses: actions/setup-node@v4
         with:
@@ -49,6 +58,8 @@ jobs:
           npm run lint
           npm run typecheck
           npm run build
+          # The Thmanyah faces must be bundled into the build.
+          test "$(ls dist/assets | grep -ci thmanyah)" -eq 7
       - name: Isolated browser database
         working-directory: backend
         run: |

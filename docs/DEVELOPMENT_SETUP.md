@@ -44,3 +44,23 @@ For an isolated Windows cluster, use PostgreSQL `initdb -D <workspace>\.local\po
 - Fixture credentials exist only in BrowserTestSeeder/e2e tests. Never seed those accounts in development or production. Repeated browser runs create separate projects in the disposable e2e DB.
 
 Network/process access inside Codex's sandbox required approved escalated execution for package downloads, PostgreSQL connections, PHP test subprocesses and browsers. This is an execution-environment limitation, not a requirement to run TestPilot as an administrator.
+
+## Git workflow
+
+Follow GIT_WORKFLOW.md: branch `feature/*` or `fix/*` from `dev`, test, commit with explicit paths, push the task branch, PR into `dev`, then one rolling PR `dev` → `main` merged only by the owner. Remote `origin` = https://github.com/AbbasCG/TestPilot (credentials through Git Credential Manager; never store tokens in the repo).
+
+## Fonts (Thmanyah)
+
+The interface uses Thmanyah Sans (300/400/500/700/900) and Thmanyah Serif Display (700/900). The seven `.woff2` files and the licence text are committed in `frontend/src/assets/fonts/thmanyah/` with the owner's permission (confirmed 2026-11-12). `src/fonts.ts` registers them with `font-display: swap`; Vite bundles them with hashed names into `dist/assets`, and CI asserts all seven are present. If a file were missing, the bundled Noto Sans Arabic is used. `e2e/typography.spec.ts` checks that the faces load and apply on every main screen. Do not treat `frontend/dist` as a source: `npm run build` empties it. The owner's original copies are also backed up in `.local/backups/fonts-thmanyah-original-20261112`.
+
+## Manual two-browser test (local)
+
+1. Start PostgreSQL (`infra/dev-db.ps1 start`), then in `backend`: `php artisan serve --host=127.0.0.1 --port=8000`; in `frontend`: `npm run dev`. Open http://127.0.0.1:5173.
+2. Create accounts with `php artisan testpilot:user <email> --name="<name>"` (password typed hidden, at least 12 characters). Use two different browsers or one normal + one private window.
+3. Owner: create a project, add an environment, add the second account as `tester` under أعضاء الفريق.
+4. الاختبارات: create a suite and a ready scenario (or run `php artisan testpilot:import-tharaa <owner-email>` for the Tharaa suites).
+5. جلسات الاختبار ← جلسة جديدة: choose Tester A and Tester B, select scenarios, start.
+6. Each tester records their own steps; a failed step shows «إنشاء مشكلة من هذه النتيجة».
+7. On the issue: upload a screenshot, triage, assign, start fix, send to retest (choose the other tester).
+8. The retester opens «تنفيذ إعادة الاختبار», attaches evidence and records the result.
+9. التحليلات: review readiness, export CSV/JSON/Markdown, open «تقرير قابل للطباعة / PDF» and print to PDF.

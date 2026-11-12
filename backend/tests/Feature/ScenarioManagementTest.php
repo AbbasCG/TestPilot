@@ -68,7 +68,19 @@ class ScenarioManagementTest extends TestCase
         $data['steps'][0]['expected_result'] = '';
         $response = $this->postJson("/api/projects/$project/scenarios", $data)->assertUnprocessable()->assertJsonValidationErrors('steps.0.expected_result');
         $this->assertSame('اكتب نتيجة متوقعة لكل خطوة قبل الحفظ.', $response->json('errors')['steps.0.expected_result'][0]);
+        $data = self::payload($suite);
+        $data['steps'][2]['depends_on'] = [$data['steps'][0]['id'], $data['steps'][0]['id']];
+        $this->postJson("/api/projects/$project/scenarios", $data)->assertUnprocessable()->assertJsonValidationErrors('steps.2.depends_on');
         $this->assertDatabaseCount('test_cases', 0);
+    }
+
+    public function test_two_steps_may_share_the_same_prerequisite(): void
+    {
+        [$project, $suite] = $this->fixture();
+        $data = self::payload($suite);
+        $data['steps'][1]['depends_on'] = [$data['steps'][0]['id']];
+        $data['steps'][2]['depends_on'] = [$data['steps'][0]['id']];
+        $this->postJson("/api/projects/$project/scenarios", $data)->assertCreated();
     }
 
     public function test_dependencies_cannot_be_cyclic(): void

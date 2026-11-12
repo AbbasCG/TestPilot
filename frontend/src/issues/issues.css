@@ -1,0 +1,253 @@
+/* M5: issues, evidence and retests. Uses the shell tokens from index.css. */
+.app {
+  --sev-blocker: #8f1d2c;
+  --sev-critical: #bc3545;
+  --sev-major: #b35a0c;
+  --sev-minor: #81590a;
+  --sev-trivial: #5b6c81;
+  --retest: #6b3fc0;
+  --tint-red: #fae4e8;
+  --tint-amber: #fff0ce;
+  --tint-teal: #e1f1ee;
+  --tint-blue: #e4edfc;
+  --tint-violet: #eee6fb;
+  --tint-grey: #edf1f6;
+}
+.app[data-theme="dark"] {
+  --sev-blocker: #ff8f9c;
+  --sev-critical: #ff9aa6;
+  --sev-major: #ffb26b;
+  --sev-minor: #f2cd73;
+  --sev-trivial: #b0c0d1;
+  --retest: #cbb4ff;
+  --tint-red: #4a1f2a;
+  --tint-amber: #463a19;
+  --tint-teal: #17413c;
+  --tint-blue: #1d3558;
+  --tint-violet: #2f2552;
+  --tint-grey: #243a50;
+}
+.app[data-theme="dark"] .result-badge.passed { color: #7fd8c9; background: var(--tint-teal); }
+.app[data-theme="dark"] .result-badge.failed { color: #ff9aa6; background: var(--tint-red); }
+.app[data-theme="dark"] .result-badge.blocked { color: #f2cd73; background: var(--tint-amber); }
+.result-badge.pending { color: #235cc7; background: var(--tint-blue); }
+.result-badge.cancelled { color: var(--muted); background: var(--tint-grey); }
+.app[data-theme="dark"] .result-badge.pending { color: #9fc0ff; }
+
+.issue-status,
+.severity {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  background: var(--tint-grey);
+  color: var(--muted);
+}
+.severity::before { content: ""; width: 7px; height: 7px; border-radius: 2px; background: currentColor; }
+.severity-blocker { color: var(--sev-blocker); background: var(--tint-red); }
+.severity-critical { color: var(--sev-critical); background: var(--tint-red); }
+.severity-major { color: var(--sev-major); background: var(--tint-amber); }
+.severity-minor { color: var(--sev-minor); background: var(--tint-amber); }
+.severity-trivial { color: var(--sev-trivial); }
+.status-new,
+.status-triaged { color: #235cc7; background: var(--tint-blue); }
+.status-assigned,
+.status-in_progress { color: var(--sev-major); background: var(--tint-amber); }
+.status-ready_for_retest { color: var(--retest); background: var(--tint-violet); }
+.status-verified,
+.status-closed { color: #147d70; background: var(--tint-teal); }
+.status-reopened { color: var(--sev-critical); background: var(--tint-red); }
+.app[data-theme="dark"] .status-new,
+.app[data-theme="dark"] .status-triaged { color: #9fc0ff; }
+.app[data-theme="dark"] .status-verified,
+.app[data-theme="dark"] .status-closed { color: #7fd8c9; }
+
+.issue-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.severity-strip { margin-bottom: 22px; }
+.severity-strip h3 { font-size: 14px; margin-bottom: 12px; }
+.severity-bars { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.severity-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-weight: 500;
+}
+.severity-bar::before { display: none; }
+.severity-bar.severity-trivial { background: var(--tint-grey); }
+.severity-bar strong { font-size: 20px; font-variant-numeric: tabular-nums; }
+.severity-strip .hint { margin: 12px 0 0; }
+.my-retests { margin-bottom: 22px; border-inline-start: 4px solid var(--retest); }
+.my-retests h3 { display: flex; gap: 8px; align-items: center; font-size: 15px; margin-bottom: 10px; }
+.my-retests ul { list-style: none; margin: 0; padding: 0; }
+.my-retests li { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
+.my-retests li .muted { font-size: 12px; margin-inline-start: auto; }
+
+.issue-filters {
+  display: grid;
+  grid-template-columns: minmax(220px, 2fr) repeat(5, minmax(110px, 1fr)) auto;
+  gap: 10px;
+  align-items: end;
+  padding: 16px;
+  border-bottom: 1px solid var(--line);
+}
+.issue-filters label { font-size: 12px; display: grid; gap: 4px; }
+.issue-filters select,
+.issue-filters input { width: 100%; }
+.search-field { position: relative; }
+.search-field svg { position: absolute; inset-inline-start: 11px; bottom: 13px; color: var(--muted); }
+.search-field input { padding-inline-start: 34px; }
+.issue-table td { vertical-align: top; }
+.issue-table td small { display: block; margin-top: 3px; font-size: 11.5px; }
+.issue-number { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+
+.issue-heading { align-items: flex-end; }
+.issue-heading h2 { font-size: 22px; margin: 4px 0 8px; }
+.issue-badges { display: flex; flex-wrap: wrap; gap: 8px; }
+.issue-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 22px; align-items: start; }
+.issue-main,
+.issue-side { display: grid; gap: 22px; min-width: 0; }
+.issue-main > .panel h3,
+.issue-side > .panel h3 { margin-bottom: 12px; }
+.issue-side > form.panel { display: grid; gap: 12px; }
+.issue-form { display: grid; gap: 14px; max-width: 980px; }
+.prewrap { white-space: pre-wrap; overflow-wrap: anywhere; }
+.reproduction {
+  background: var(--canvas);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.9;
+}
+.subheading { font-size: 13px; font-weight: 700; margin: 18px 0 8px; color: var(--muted); }
+.expected-actual { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+.expected-actual > div { border-radius: 8px; padding: 12px 14px; font-size: 13px; }
+.expected-actual .expected { background: var(--tint-teal); }
+.expected-actual .actual { background: var(--tint-red); }
+.expected-actual strong { display: block; margin-bottom: 4px; font-size: 12px; }
+.issue-facts { margin: 0; display: grid; gap: 10px; font-size: 13px; }
+.issue-facts dt { color: var(--muted); font-size: 11.5px; }
+.issue-facts dd { margin: 0; overflow-wrap: anywhere; }
+
+.workflow-track { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 3px; counter-reset: wf; }
+.workflow-track li {
+  counter-increment: wf;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.workflow-track li::before {
+  content: counter(wf);
+  width: 20px;
+  height: 20px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  font-size: 10.5px;
+}
+.workflow-track li.current { background: var(--tint-blue); color: inherit; font-weight: 700; }
+.workflow-track li.current::before { background: #235cc7; color: #fff; border-color: #235cc7; }
+.workflow-panel form { display: grid; gap: 12px; }
+.transition-options { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; margin: 0; display: grid; gap: 2px; }
+.transition-options legend { font-size: 12px; color: var(--muted); padding: 0 4px; }
+
+.retest-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.retest {
+  border: 1px solid var(--line);
+  border-inline-start-width: 4px;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 13px;
+  display: grid;
+  gap: 6px;
+}
+.retest-passed { border-inline-start-color: #147d70; }
+.retest-failed { border-inline-start-color: #bc3545; }
+.retest-pending { border-inline-start-color: var(--retest); }
+.retest .section-heading { margin: 0; }
+.inline-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin-top: 14px; }
+
+.comments { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 12px; }
+.comments li { display: flex; gap: 10px; }
+.comments li > div { background: var(--canvas); border-radius: 8px; padding: 9px 12px; flex: 1; min-width: 0; }
+.comments p { margin-top: 4px; font-size: 13px; }
+.issue-timeline p { font-size: 12px; margin-top: 2px; }
+
+.evidence-gallery {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 12px;
+}
+.evidence-item { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); display: grid; }
+.evidence-preview { display: block; aspect-ratio: 16 / 10; width: 100%; background: var(--canvas); object-fit: contain; }
+.evidence-preview img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.evidence-icon { display: grid; place-items: center; color: var(--muted); }
+.evidence-meta { padding: 8px 10px; display: grid; gap: 2px; font-size: 12px; min-width: 0; }
+.evidence-meta a { display: inline-flex; gap: 5px; align-items: center; overflow-wrap: anywhere; }
+.evidence-meta small { color: var(--muted); font-size: 11px; }
+.evidence-meta .hash { font-family: var(--font-mono); font-size: 10px; }
+.evidence-empty { font-size: 13px; margin-bottom: 12px; }
+.evidence-upload {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+  border-top: 1px dashed var(--line);
+  padding-top: 14px;
+}
+.evidence-upload .hint,
+.evidence-upload .error,
+.evidence-upload .saved { grid-column: 1 / -1; margin: 0; font-size: 12px; }
+.evidence-upload.compact { grid-template-columns: 1fr; border-top: 0; padding-top: 8px; }
+.evidence-upload input[type="file"] { width: 100%; font-size: 12px; }
+.result-extras { margin-top: 12px; display: grid; gap: 10px; }
+.result-extras .evidence-gallery { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); margin: 0; }
+.evidence-toggle summary { cursor: pointer; font-size: 12px; font-weight: 500; color: #235cc7; }
+.app[data-theme="dark"] .evidence-toggle summary { color: #9fc0ff; }
+.linked-issue {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: var(--tint-red);
+  color: var(--sev-critical);
+  justify-self: start;
+}
+.create-issue { justify-self: start; font-size: 12px; border-color: var(--sev-critical); color: var(--sev-critical); }
+
+@media (max-width: 1200px) {
+  .issue-filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .issue-filters .search-field { grid-column: 1 / -1; }
+}
+@media (max-width: 1050px) {
+  .issue-layout { grid-template-columns: 1fr; }
+}
+@media (max-width: 720px) {
+  .issue-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .severity-bars { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .issue-filters { grid-template-columns: 1fr 1fr; }
+  .expected-actual { grid-template-columns: 1fr; }
+  .evidence-upload { grid-template-columns: 1fr; }
+  .issue-table th:nth-child(4),
+  .issue-table td:nth-child(4),
+  .issue-table th:nth-child(6),
+  .issue-table td:nth-child(6) { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
+}

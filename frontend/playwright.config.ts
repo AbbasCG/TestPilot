@@ -22,6 +22,11 @@ export default defineConfig({
         DB_DATABASE: "testpilot_e2e",
         SANCTUM_STATEFUL_DOMAINS: "127.0.0.1:5174",
         SESSION_COOKIE: "testpilot_e2e_session",
+        // Many specs sign in with the same seeded accounts within a minute.
+        LOGIN_ATTEMPTS_PER_MINUTE: "120",
+        // Fast CI runs keep two polling runner pages open while specs call the API directly.
+        API_REQUESTS_PER_MINUTE: "5000",
+        EVIDENCE_UPLOADS_PER_MINUTE: "500",
       },
     },
     {

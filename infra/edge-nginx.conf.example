@@ -6,6 +6,8 @@ server {
     ssl_certificate /etc/letsencrypt/live/qa.softbuild.nl/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/qa.softbuild.nl/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
+    # At least the internal evidence upload limit (44m); the internal Nginx keeps 2m for every other route.
+    client_max_body_size 44m;
     location / {
         proxy_pass http://127.0.0.1:8088;
         proxy_set_header Host $host;

@@ -1,19 +1,23 @@
 # Requirements traceability
 
-Current source C: CONTINUATION_REQUIREMENTS.md, preserved verbatim. All PHASE 0–22 sections remain absent; C explicitly authorizes implementation now.
+Sources: F = FOUNDATION_REQUEST.md, C = CONTINUATION_REQUIREMENTS.md, N = CONTINUATION_REQUIREMENTS_M5_M8.md. All official PHASE 0–22 sections remain absent.
 
-| Current source | Delivered | Evidence |
+| Source | Delivered | Evidence |
 |---|---|---|
-| C §2 | Environment edit/archive/version, membership removal, owner invariant | ScenarioManagementTest lifecycle test; ProjectMaintenance UI |
-| C §3.1 | Suites create/edit/order/archive and total/ready counts | ScenarioController; suite version/archive tests |
-| C §3.2–3.3 | Complete scenario metadata and twelve ordered step types; visual persistent builder | ScenarioRequest/Service/Resource; TestManagement; browser workflow |
-| C §3.4 | Immutable revisions on every edit; stale writes rejected | revision history and conflict tests |
-| C §3.5 | Ten built-in templates and project reusable scenarios | all ten instantiated in backend tests |
-| C §4 | Immutable collaborative runs, A/B ownership, checkpoints, pause/resume, polling, final assessment | CollaborativeRunTest; real two-account browser workflow |
-| C §5 | Results and append-only history delivered; issues/evidence/retest pending | RunService and result_history; remaining M5 unimplemented |
+| F M1–M2 | Auth, isolated PostgreSQL, queue, RTL shell, projects/members/environments/dashboard | ProjectFoundationTest; foundation.spec |
+| C §2–§3 | Lifecycle, suites, scenario builder, immutable revisions, templates; shared-prerequisite fix | ScenarioManagementTest (incl. `test_two_steps_may_share_the_same_prerequisite`); scenarios.spec |
+| C §4 | Collaborative runs, A/B ownership, checkpoints, pause/resume, final assessment | CollaborativeRunTest; collaboration.spec |
+| C §5.1–5.2 / N 3 | Results linked to tester and run; issue from failed result; linked result frozen | IssueWorkflowTest; IssueHardeningTest; issues.spec |
+| N 3.1 | All issue fields, per-project number, comments, activity timeline | IssueService; migration 2026_11_12_080000; IssueWorkflowTest |
+| N 3.2 | State machine with permissions, notes, versions, duplicate/defer/won't-fix/reopen | IssueWorkflow; IssueWorkflowTest; IssueHardeningTest; quality-gates concurrency |
+| N 3.3 / C §5.4 | Private evidence, type/size checks, isolation, safe names, audit, no public URLs | EvidenceService; EvidenceSecurityTest; quality-gates evidence test |
+| N 3.4 / C §5.7–5.8 | Retest attempts, independent tester, Verified/Reopened, history preserved | IssueWorkflowTest; IssueHardeningTest; issues.spec; full-workflow.spec |
+| N 3.5 | Issues dashboard, list, detail, create, gallery, comments, timeline, retest screen, filters/search | frontend/src/issues; issues.spec; quality-gates a11y sweep |
+| N 4 | Analytics metrics, readiness, trends, comparison; CSV/JSON/MD; Arabic PDF via print | AnalyticsService; ReportExporter; AnalyticsReportTest; IssueHardeningTest; full-workflow.spec (PDF) |
+| N 5 | Tharaa project import, 6 suites, 13 scenarios, TEST-TEACHER-001, THR-AUD-143 known issue | ImportTharaa; database/data/tharaa.php; TharaaImportTest |
+| N 6 | Backend, Playwright, security, a11y, RTL, responsive, authorization, isolation, concurrency, evidence security, full E2E | 36 PHPUnit tests; 9 Playwright tests; security + code review agents |
+| N 7 | Design extended in the existing identity (issues, analytics, dark mode, mobile) without a rebuild | issues.css; analytics.css; screenshots in frontend/test-results (not committed) |
+| N 8 | Logical commits, docs updated | git log 7cb15eb..HEAD |
+| N 9 | Deployment review: GD, upload limits, evidence route body size, evidence backups | infra/*; DEPLOYMENT_PLAN.md |
 
-
-Foundation F: FOUNDATION_REQUEST.md; M1 authentication, isolated PostgreSQL, queue and RTL shell; M2 projects/members/environments/dashboard. Verified by foundation tests and browser workflows.
-
-All official PHASE 0–22 sections remain missing. M6–M8 are retained in scope pending detailed source. No production deployment is authorized.
-
+Not traced to any source (not built): server-side PDF library, notifications/e-mail, integrations, real-time server.

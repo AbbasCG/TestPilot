@@ -1,28 +1,39 @@
-# Implementation status — 2026-11-12
+# Implementation status — 2026-11-12 (Claude continuation)
 
-## Implemented against the supplied continuation requirements
+Sources: FOUNDATION_REQUEST.md (M1–M4), CONTINUATION_REQUIREMENTS.md (M2–M5), CONTINUATION_REQUIREMENTS_M5_M8.md (M5–M8). The official PHASE 0–22 reference is still missing (MASTER_REQUIREMENTS.md is a placeholder); nothing here claims master-phase coverage.
 
-- M1: independent Laravel/React/TypeScript/PostgreSQL workspace, session authentication, CSRF, policies, queues and deployment preparation.
-- M2: projects, real dashboard, project roles and membership lifecycle, environments create/edit/archive, transactional audit and version conflicts.
-- M3: suites create/edit/order/archive; full scenario metadata; twelve ordered step types; visual persisted builder; dependency validation; immutable revisions; ten templates and reusable scenarios.
-- M4: immutable scenario/environment run snapshots; distinct A/B participants; independent step results and checkpoints; explicit verification and final assessment; pause/resume; polling; optimistic conflicts; result history; scoped authorization. Active participants cannot be removed or demoted to viewer.
-- M5 foundation: results already linked to tester/run with append-only history. Issues, screenshot uploads and linked retests remain unimplemented.
+## Implemented
 
-## Verification
+- M1–M4: unchanged foundation, projects, scenario builder with immutable revisions, collaborative two-tester runs (see git history up to 7cb15eb).
+- M3 fix: two steps may now share one prerequisite (the wildcard `distinct` rule wrongly rejected it); duplicates inside one step are still rejected.
+- M5 issues: created from a saved failed/blocked step result (or standalone), unique per-project number, all required fields, environment snapshot and build; explicit state machine (`IssueWorkflow`) with manager/assignee permissions, notes required for reasoned transitions, optimistic versions, row locks; comments; activity timeline; filters, search and sorting; summary dashboard. A result linked to an issue is frozen.
+- M5 evidence: private `evidence` disk, random project-prefixed names, finfo + magic-byte verification, image decode/re-encode with pixel cap, per-kind size limits, per-item and per-project quotas, no SVG/HTML/executables, authorized download only (`nosniff`, sandbox CSP, `no-store`, inline only for images/video), upload/download audit. Evidence attaches to issues, own step results (unblocks evidence-required steps) and retest attempts.
+- M5 retest: Ready for Retest requires fix notes, build and an independent tester (not the fixer, not the requester) and creates an immutable attempt snapshot; only that tester records pass (→ Verified) or fail (→ Reopened); manager may reassign or move back to In Progress (attempt cancelled, kept). All attempts and evidence preserved.
+- M5 UI: issues dashboard with stats, severity strip and "my retests"; list with filters/search/pagination; create (prefilled from the frozen run snapshot); detail with workflow panel, evidence gallery/upload, retest history, comments, timeline; dedicated retest screen; runner links to create/view issues and per-step evidence upload.
+- M6 analytics: pass rate, failed/blocked, open/critical issues, retest outcomes and first-attempt pass rate, tester productivity, execution history (50 runs), daily trends (latest state per result per day; fixes verified by retest), release readiness per build with seven visible checks, cross-project comparison (member projects only). Exports: CSV (summary/runs/issues/testers, BOM, formula-injection safe), JSON, Markdown (escaped), all audited. Arabic PDF via a printable RTL report and the browser's print engine (no new server dependency); verified by generating a PDF in Playwright.
+- M7 Tharaa: `php artisan testpilot:import-tharaa owner@email [--dry-run]` — additive, idempotent, never creates accounts or touches Tharaa. 6 suites, 13 scenarios from Tharaa's verified demo scenario document (b7785e2), each with A/B steps, prerequisites, test data, expected results and shared checkpoints, starting with TEST-TEACHER-001. THR-AUD-143 imported as an open, triaged Known Issue. Kifah tours scenario is a draft because the tours are not deployed on Demo (Tharaa doc B11).
+- M8: review-driven hardening (see CLAUDE_HANDOFF), concurrency/security/accessibility Playwright gates, deployment asset fixes for uploads.
 
-- PostgreSQL: 21 tests, 181 assertions pass, including isolation, result ownership, conflicts, immutable snapshots and final assessment guards.
-- TypeScript, ESLint/oxlint and production build pass. Two nonblocking Fast Refresh export warnings remain.
-- Real two-account collaborative browser test passes: pause/resume, polling, persisted results after reload, separate checkpoint confirmations, explicit final assessment and mobile width.
-- Mobile runner screenshot inspected. Full browser regression result is recorded in the handoff after completion.
-- Pint passes.
+## Repository and typography (2026-11-12, second session)
 
-## Limits and next work
+- GitHub: https://github.com/AbbasCG/TestPilot. `main` = stable base 7cb15eb (M1–M4); `dev` = M5–M8 plus the typography/workflow work; PR `dev` → `main` open for owner review. Policy in GIT_WORKFLOW.md and CLAUDE.md. CI runs on PRs and pushes to main/dev.
+- Typography: Thmanyah Sans / Thmanyah Serif Display applied to every screen through `src/fonts.ts` and Tailwind tokens; the font files are committed with the owner's permission; Noto Sans Arabic fallback; verified by e2e/typography.spec.ts and a CI bundle check.
+- CI fixes: stable accessible names for all labelled textareas (Chromium included typed text in the name), and a configurable login throttle (`LOGIN_ATTEMPTS_PER_MINUTE`, default 5) raised only for the isolated E2E server.
+- Codex's uncommitted M5 draft: backed up (`.local/backups/codex-m5-draft-20261112`, local branch `backup/codex-m5-draft`), moved out of the main working tree; no unique work worth merging.
 
-1. M5: secure private screenshot uploads, failed-result issues, versioned issue status, linked retest and history. Evidence-required steps currently cannot pass because uploads are not implemented; this is enforced, not bypassed.
-2. Review cross-scenario dependency invalidation when an upstream saved result is revised; same-scenario downstream passed steps already prevent rewriting their prerequisites.
-3. M6–M8 remain in scope, but detailed requirements are absent. All official PHASE 0–22 sections are still missing; MASTER_REQUIREMENTS.md records this honestly. CONTINUATION_REQUIREMENTS.md explicitly authorizes the delivered work.
-4. Docker daemon/runtime, Linux deployment rehearsal, restore drill and remote CI remain unverified. Account provisioning is CLI-only.
+## Verification (first session, worktree branch)
 
-No deployment, DNS, remote push, global install or modification of other projects. Local PostgreSQL uses isolated port 55432. Production target remains qa.softbuild.nl on Hetzner.
+- PostgreSQL (`testpilot_test`): 36 tests, 513 assertions pass.
+- TypeScript, ESLint/oxlint (2 pre-existing Fast Refresh warnings), production build pass.
+- Playwright: 9/9 pass in installed Chrome — foundation, CSRF, scenario builder, collaboration, issues/evidence/retest, full UI lifecycle with PDF report, concurrent numbering/stale transitions, evidence security over HTTP, and an accessibility/RTL/responsive (1440 and 390 px)/dark-mode sweep of 8 screens.
+- Independent security review (no Critical/High) and code review; all actionable findings fixed with tests.
+- `docker compose config` validates; `backup.sh` passes `sh -n`.
 
-Full browser regression: 4/4 passed (53.2 seconds), covering foundation, CSRF, scenario revisions and collaboration.
+## Not done / limits
+
+1. Arabic PDF is browser-generated (print → PDF); no server-side PDF endpoint (would need a new dependency such as mPDF — owner approval required).
+2. No frontend unit-test runner exists (Vitest not installed); frontend behaviour is covered by Playwright. Accessibility checks are scripted (labels, names, alt, ids, lang/dir, overflow, focus), not an axe/screen-reader audit.
+3. Videos are not transcoded (metadata kept); inline MP4 has no byte-range support; no malware scanning; orphan-file sweep after hard crashes not implemented.
+4. Development DB (`testpilot`) has no accounts and is not migrated to the M5 schema from this branch (the main checkout contains an uncommitted Codex draft of the same migration filename). Run `php artisan migrate` after merging, create an owner with `testpilot:user`, then `testpilot:import-tharaa`.
+5. Docker images, TLS, restore drill and remote CI still unverified (Docker daemon unavailable). No deployment, DNS or push performed.
+6. Real-time sync is still polling (3 s on runs).

@@ -41,6 +41,8 @@ import type { Page, Project, User } from "./api";
 import { TestManagement } from "./testing/TestManagement";
 import { ProjectMaintenance } from "./testing/ProjectMaintenance";
 import { RunManagement } from "./testing/RunManagement";
+import { IssueManagement } from "./issues/IssueManagement";
+import { AnalyticsSection, ProjectComparison } from "./analytics/Analytics";
 
 const client = new QueryClient({
   defaultOptions: {
@@ -408,6 +410,7 @@ function Dashboard() {
           projects.data && <ProjectTable projects={projects.data.data} />
         )}
       </section>
+      <ProjectComparison />
     </>
   );
 }
@@ -510,7 +513,7 @@ function ProjectWizard() {
               </span>
               <label>
                 وصف المشروع
-                <textarea
+                <textarea aria-label="وصف المشروع"
                   {...form.register("description")}
                   rows={4}
                   placeholder="ما الذي سيختبره الفريق في هذا المشروع؟"
@@ -579,6 +582,8 @@ function ProjectDetail() {
       <nav className="tabs" aria-label="أقسام المشروع">
         <NavLink to={`/projects/${id}/runs`}>جلسات الاختبار</NavLink>
         <NavLink to={`/projects/${id}/tests`}>الاختبارات</NavLink>
+        <NavLink to={`/projects/${id}/issues`}>المشكلات</NavLink>
+        <NavLink to={`/projects/${id}/analytics`}>التحليلات</NavLink>
         <NavLink to={`/projects/${id}`} end>
           نظرة عامة
         </NavLink>
@@ -590,6 +595,8 @@ function ProjectDetail() {
       <Routes>
         <Route path="runs/*" element={<RunManagement project={p} />} />
         <Route path="tests/*" element={<TestManagement project={p} />} />
+        <Route path="issues/*" element={<IssueManagement project={p} />} />
+        <Route path="analytics/*" element={<AnalyticsSection project={p} />} />
         <Route index element={<ProjectOverview project={p} />} />
         <Route path="team" element={<Team project={p} />} />
         <Route
@@ -813,7 +820,7 @@ function EditProject({ project: p }: { project: Project }) {
         </label>
         <label>
           الوصف
-          <textarea
+          <textarea aria-label="الوصف"
             {...form.register("description")}
             maxLength={5000}
             rows={4}

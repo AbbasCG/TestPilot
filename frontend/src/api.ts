@@ -60,3 +60,33 @@ export async function api<T>(
   }
   return response.status === 204 ? (undefined as T) : response.json();
 }
+export async function upload<T>(path: string, form: FormData): Promise<T> {
+  const token = document.cookie
+    .split("; ")
+    .find((c) => c.startsWith("XSRF-TOKEN="))
+    ?.slice(11);
+  const response = await fetch(path, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: {
+      Accept: "application/json",
+      ...(token ? { "X-XSRF-TOKEN": decodeURIComponent(token) } : {}),
+    },
+    body: form,
+  });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    const validation = Object.values(payload.errors || {})
+      .flat()
+      .join(" ");
+    throw new ApiError(
+      validation ||
+        payload.message ||
+        (response.status === 413
+          ? "الملف أكبر من الحد الذي يقبله الخادم."
+          : "تعذّر رفع الملف. حاول مرة أخرى."),
+      response.status,
+    );
+  }
+  return response.json();
+}

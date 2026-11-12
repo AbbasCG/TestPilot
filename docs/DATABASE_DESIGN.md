@@ -21,3 +21,15 @@ Project update uses `SELECT ... FOR UPDATE`, required client version, increment 
 Future entities: suites, cases and versioned steps, scenario templates/composition, immutable run snapshots, participants, step assignments/results and checkpoint arrivals. Exact columns await the authoritative PHASE 0–22 source; do not guess requirements. Enforce project association consistency at both validation and database boundaries.
 
 Local development currently uses the isolated cluster owner role. Production init script creates a separate non-superuser application role owning only TestPilot's database; administrator credentials are only injected into PostgreSQL. Backups must include both DB and private storage when file support is added.
+
+## M5 tables (migration 2026_11_12_080000)
+
+| Table | Purpose and constraints |
+|---|---|
+| issues | Project FK; unique `(project_id, number)` and `(id, project_id)`; unique `step_result_id`; composite FKs to test_runs, test_cases, environments and duplicate issue within the same project; CHECK on status, severity, priority, no self-duplicate; environment snapshot; version; closed_at |
+| issue_comments | Append-only comments per issue |
+| issue_activities | Append-only timeline (created, updated, status_changed, commented, evidence_added, retest_*) with JSON metadata |
+| retest_attempts | Composite FK to issue in the same project; unique `(issue_id, attempt_number)`; partial unique index: one `pending` per issue; immutable snapshot of steps/expected/original result; status pending/passed/failed/cancelled; version |
+| evidence_files | Project FK; owner is an issue (composite FK), step result or retest attempt (`num_nonnulls >= 1`); kind CHECK; unique random path; mime, size, sha256, uploader |
+
+Files live on the private `evidence` disk, never under `public`. Backups must include the evidence archive (infra/backup.sh).

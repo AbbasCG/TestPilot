@@ -8,12 +8,11 @@ use App\Models\TestRun;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
 class RunService
 {
-    public function __construct(private ProjectService $audit) {}
+    public function __construct(private ProjectService $audit, private EvidenceService $evidence) {}
 
     public function create(Project $project, User $actor, array $data): TestRun
     {
@@ -78,7 +77,9 @@ class RunService
             return $result;
         });
 
-        return [...$run->toArray(), 'participants' => $participants, 'cases' => $cases, 'results' => $results, 'progress' => ['done' => $results->where('status', '!=', 'pending')->count(), 'passed' => $results->where('status', 'passed')->count(), 'total' => $results->count()]];
+        $issues = DB::table('issues')->where('test_run_id', $run->id)->whereNotNull('step_result_id')->get(['id', 'number', 'status', 'severity', 'step_result_id']);
+
+        return [...$run->toArray(), 'participants' => $participants, 'cases' => $cases, 'results' => $results, 'issues' => $issues, 'evidence' => $this->evidence->present($run->project_id, runId: $run->id), 'progress' => ['done' => $results->where('status', '!=', 'pending')->count(), 'passed' => $results->where('status', 'passed')->count(), 'total' => $results->count()]];
     }
 
     public function saveResult(Project $project, TestRun $run, User $actor, int $resultId, array $data): void
@@ -92,6 +93,7 @@ class RunService
             abort_unless($result, 404);
             $participant = DB::table('run_participants')->find($result->participant_id);
             abort_unless($participant->user_id === $actor->id, 403, 'يمكنك اعتماد خطواتك فقط.');
+            abort_if(DB::table('issues')->where('step_result_id', $resultId)->exists(), 409, 'هذه النتيجة مرتبطة بمشكلة؛ يُتحقق من الإصلاح بإعادة الاختبار ولا تُعدّل النتيجة الأصلية.');
             abort_if($result->version !== (int) $data['version'], 409, 'تغيرت النتيجة. حدّث البيانات قبل الحفظ.');
             $case = DB::table('run_cases')->find($result->run_case_id);
             $snapshot = json_decode($case->snapshot, true, flags: JSON_THROW_ON_ERROR);
@@ -126,7 +128,7 @@ class RunService
 
     private function hasEvidence(int $resultId, int $actorId): bool
     {
-        return Schema::hasTable('evidence_files') && DB::table('evidence_files')->where('step_result_id', $resultId)->where('uploaded_by', $actorId)->exists();
+        return DB::table('evidence_files')->where('step_result_id', $resultId)->where('uploaded_by', $actorId)->exists();
     }
 
     public function transition(Project $project, TestRun $run, User $actor, array $data): void

@@ -1,7 +1,10 @@
 FROM php:8.3-fpm-bookworm
-RUN apt-get update && apt-get install -y --no-install-recommends libpq-dev libicu-dev libzip-dev unzip \
-    && docker-php-ext-install pdo_pgsql intl zip bcmath pcntl opcache \
+RUN apt-get update && apt-get install -y --no-install-recommends libpq-dev libicu-dev libzip-dev unzip libpng-dev libjpeg62-turbo-dev libwebp-dev \
+    && docker-php-ext-configure gd --with-jpeg --with-webp \
+    && docker-php-ext-install pdo_pgsql intl zip bcmath pcntl opcache gd \
     && rm -rf /var/lib/apt/lists/*
+# Evidence uploads (backend/config/evidence.php): largest kind is a 40 MB video; screenshots are decoded and re-encoded by GD.
+RUN printf 'upload_max_filesize=42M\npost_max_size=44M\nmemory_limit=256M\nexpose_php=Off\n' > /usr/local/etc/php/conf.d/zz-testpilot.ini
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 COPY backend/composer.json backend/composer.lock ./

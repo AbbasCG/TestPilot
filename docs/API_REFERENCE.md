@@ -23,4 +23,29 @@ Single resources: `{data: {...}}`. Roles: owner (server-assigned), manager, test
 
 Errors: 401 unauthenticated, 403 forbidden member action, 404 absent/outside project, 409 stale version, 419 missing/invalid CSRF proof, 422 validation (`message/errors`), 429 throttled, 503 health dependency failure. Project names max 120 chars, description 5000, environment names 80; environment URLs HTTP(S) only, max 2048.
 
-No suite, case, scenario, run or result endpoints exist yet. Do not advertise or call invented routes. OpenAPI generation and expanded activity pagination can be added after the domain contract is established.
+Scenario, suite and run endpoints are listed in backend/routes/api.php (M3–M4).
+
+## M5 issues, evidence, retests
+
+| Method | Path | Behavior |
+|---|---|---|
+| GET | `/api/projects/{id}/issues` | Filters `status` (or `open`), `severity`, `priority`, `assignee_id`, `reporter_id`, `test_run_id`, `search` (title/description/#number), `sort` newest/updated/severity; 25/page |
+| GET | `/api/projects/{id}/issues-summary` | Open, critical open, ready for retest, mine, by status/severity, retest counts |
+| POST | `/api/projects/{id}/issues` | Non-viewer. Fields title, description, reproduction_steps, expected_result, actual_result, severity (blocker/critical/major/minor/trivial), priority (urgent/high/medium/low), build_version?, step_result_id? (failed/blocked, once), environment_id? |
+| GET | `/api/projects/{id}/issues/{issue}` | Detail with run/step, comments, activities, retests, evidence and the caller's allowed `permissions.transitions` |
+| PATCH | `/api/projects/{id}/issues/{issue}` | Reporter or manager; `version` required; severity/priority manager-only after triage |
+| POST | `/api/projects/{id}/issues/{issue}/transition` | `{to, version, note?, assignee_id?, duplicate_of_id?, retest_assignee_id?, build_version?, environment_id?}`; 403 not allowed, 409 stale, 422 invalid |
+| POST | `/api/projects/{id}/issues/{issue}/comments` | Non-viewer `{body}` |
+| GET | `/api/projects/{id}/retests/mine` | Caller's pending retests |
+| PUT | `/api/projects/{id}/retests/{retest}` | Retest assignee only `{version, status passed/failed, actual_result, notes?, verified}` |
+| PUT | `/api/projects/{id}/retests/{retest}/assignee` | Manager `{assignee_id, version}` |
+| POST | `/api/projects/{id}/evidence` | Multipart `{file, kind screenshot/video/attachment, issue_id | step_result_id | retest_attempt_id}`; throttled 20/min |
+| GET | `/api/projects/{id}/evidence/{evidence}` | Member download; `?inline=1` for images/video; audited |
+
+## M6 analytics
+
+| Method | Path | Behavior |
+|---|---|---|
+| GET | `/api/projects/{id}/analytics?days=7|30|90&build=` | Full report (results, runs, issues, retests, testers, history, trends, builds, readiness) |
+| GET | `/api/projects/{id}/reports/export?format=csv|json|md&dataset=summary|runs|issues|testers` | Attachment download, audited |
+| GET | `/api/analytics/projects` | Comparison across the caller's member projects |

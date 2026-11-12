@@ -4,27 +4,16 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\CreatesCollaborativeRun;
 use Tests\TestCase;
 
 class CollaborativeRunTest extends TestCase
 {
-    use RefreshDatabase;
+    use CreatesCollaborativeRun, RefreshDatabase;
 
     public function fixture(): array
     {
-        $a = User::factory()->create();
-        $b = User::factory()->create();
-        $this->actingAs($a);
-        $p = $this->postJson('/api/projects', ['name' => 'Collaboration'])->json('data.id');
-        $this->putJson("/api/projects/$p/members", ['email' => $b->email, 'role' => 'tester'])->assertOk();
-        $suite = $this->postJson("/api/projects/$p/suites", ['name' => 'Invitations', 'position' => 0, 'archived' => false])->json('data.id');
-        $environment = $this->postJson("/api/projects/$p/environments", ['name' => 'Stage'])->json('data.id');
-        $content = array_merge(config('scenario_templates')[9]['content'], ['suite_id' => $suite, 'status' => 'ready']);
-        $scenario = $this->postJson("/api/projects/$p/scenarios", $content)->assertCreated()->json('data');
-        $input = ['title' => 'Two-person run', 'build_version' => 'v1.0', 'environment_id' => $environment, 'suite_id' => $suite, 'tester_a_id' => $a->id, 'tester_b_id' => $b->id, 'scenarios' => [['id' => $scenario['id'], 'version' => 1]]];
-        $run = $this->postJson("/api/projects/$p/runs", $input)->assertCreated()->json('data');
-
-        return [$p, $a, $b, $run, $scenario, $input];
+        return $this->collaborativeRun();
     }
 
     public static function resultPayload(int $version = 0, string $status = 'passed'): array

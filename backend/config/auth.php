@@ -112,6 +112,20 @@ return [
     |
     */
 
+    /*
+    | Login attempts allowed per minute for one e-mail and IP (IP-wide limit is
+    | six times this). Keep the default in every real environment.
+    */
+    'login_attempts_per_minute' => (int) env('LOGIN_ATTEMPTS_PER_MINUTE', 5),
+
+    /*
+    | Authenticated API requests per user per minute and evidence uploads per
+    | user per minute. Defaults apply to every real environment; only the
+    | isolated browser-test server raises them.
+    */
+    'api_requests_per_minute' => (int) env('API_REQUESTS_PER_MINUTE', 120),
+    'evidence_uploads_per_minute' => (int) env('EVIDENCE_UPLOADS_PER_MINUTE', 20),
+
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
 ];
