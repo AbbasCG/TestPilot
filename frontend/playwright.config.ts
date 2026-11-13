@@ -27,6 +27,8 @@ export default defineConfig({
         // Fast CI runs keep two polling runner pages open while specs call the API directly.
         API_REQUESTS_PER_MINUTE: "5000",
         EVIDENCE_UPLOADS_PER_MINUTE: "500",
+        INVITATIONS_PER_HOUR: "1000",
+        ADMIN_ACTIONS_PER_MINUTE: "1000",
       },
     },
     {

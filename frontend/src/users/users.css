@@ -1,0 +1,174 @@
+/* User management, invitations and account screens. Shares the shell tokens. */
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px 16px;
+  background: #f3f6fa;
+}
+.auth-card {
+  width: min(480px, 100%);
+  background: #fff;
+  border: 1px solid #dce3ed;
+  border-radius: 14px;
+  padding: 32px 30px;
+  display: grid;
+  gap: 14px;
+  box-shadow: 0 18px 50px rgb(25 51 74 / 0.08);
+}
+.auth-card .brand { justify-content: flex-start; color: #235cc7; font-size: 22px; }
+.auth-card h1 { font-size: 26px; }
+.auth-card form { display: grid; gap: 4px; }
+.auth-card label { margin: 10px 0 4px; }
+.auth-card form button { margin-top: 14px; }
+.auth-notice { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 9px; background: #fff4d6; color: #6d4c06; font-size: 13px; }
+.auth-notice svg { flex: none; margin-top: 3px; }
+.auth-result { padding: 12px 14px; border-radius: 9px; background: #e1f1ee; color: #0f5f55; }
+.text-link-button { border: 0; background: none; color: #617389; justify-self: start; padding: 4px 0; min-height: 0; }
+.invite-facts { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0; font-size: 13px; }
+.invite-facts dt { color: #617389; }
+.invite-facts dd { margin: 0; overflow-wrap: anywhere; }
+
+.one-time-secret {
+  border: 1px solid #e2b33c;
+  background: #fffaf0;
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: grid;
+  gap: 10px;
+  margin: 14px 0;
+}
+.one-time-secret h3 { display: flex; gap: 8px; align-items: center; font-size: 15px; }
+.one-time-secret p { font-size: 13px; color: #6d4c06; }
+.secret-value { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }
+.secret-value code {
+  flex: 1 1 260px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px dashed #c99a2e;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+.one-time-secret .primary { justify-self: start; }
+
+.account-state, .invite-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  background: var(--tint-grey, #edf1f6);
+  color: var(--muted);
+}
+.account-state::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.state-active, .invite-accepted { color: #147d70; background: var(--tint-teal, #e1f1ee); }
+.state-must_change_password, .invite-pending { color: #8e630d; background: var(--tint-amber, #fff0ce); }
+.state-suspended, .state-disabled, .invite-revoked { color: #a62b3b; background: var(--tint-red, #fae4e8); }
+.invite-expired { color: var(--muted); }
+
+.users-stats { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.stat-button { text-align: start; cursor: pointer; font: inherit; color: inherit; }
+.stat-button[aria-pressed="true"] { border-color: #235cc7; box-shadow: inset 0 0 0 1px #235cc7; }
+.users-filters {
+  display: grid;
+  grid-template-columns: minmax(220px, 2fr) repeat(3, minmax(130px, 1fr)) auto;
+  gap: 10px;
+  align-items: end;
+  padding: 16px;
+  border-bottom: 1px solid var(--line);
+}
+.users-filters label, .inline-filter { font-size: 12px; display: grid; gap: 4px; }
+.inline-filter { max-width: 240px; margin-bottom: 14px; }
+.user-cell { display: flex; align-items: center; gap: 10px; font-weight: 500; }
+.user-cell small { display: block; color: var(--muted); font-size: 11.5px; font-weight: 400; }
+.sort-button { border: 0; background: none; padding: 0; min-height: 0; color: inherit; font-weight: 500; font-size: inherit; }
+.row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.row-actions button { font-size: 12px; padding: 4px 10px; min-height: 32px; }
+.plain-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 13px; }
+button.danger { border-color: #bc3545; color: #bc3545; }
+
+.wizard-progress { list-style: none; margin: 0 0 18px; padding: 0; display: flex; gap: 8px; flex-wrap: wrap; counter-reset: wz; }
+.wizard-progress li {
+  counter-increment: wz;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--muted);
+}
+.wizard-progress li::before {
+  content: counter(wz);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  font-size: 11px;
+  border: 1px solid var(--line);
+}
+.wizard-progress li.current { color: inherit; border-color: #235cc7; font-weight: 500; }
+.wizard-progress li.current::before { background: #235cc7; border-color: #235cc7; color: #fff; }
+.wizard-progress li.done::before { content: "✓"; background: #147d70; border-color: #147d70; color: #fff; }
+.wizard-panel { max-width: 860px; }
+.method-options { border: 0; padding: 0; margin: 0 0 12px; display: grid; gap: 10px; }
+.method-options legend { font-weight: 500; margin-bottom: 8px; }
+.method-options.compact { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+.method-card {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+}
+.method-card input { width: auto; min-height: 0; margin-top: 5px; }
+.method-card small { display: block; font-weight: 400; color: var(--muted); margin-top: 2px; }
+.method-card.selected { border-color: #235cc7; background: var(--tint-blue, #e4edfc); }
+.existing-account, .resolution { border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin-top: 14px; display: grid; gap: 10px; }
+.resolution p { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.member-flow { margin-top: 26px; display: grid; gap: 8px; }
+.member-flow h3 { display: flex; gap: 8px; align-items: center; }
+.account-actions form { display: grid; gap: 8px; }
+.account-actions hr { border: 0; border-top: 1px solid var(--line); margin: 14px 0; width: 100%; }
+.account-actions > button { justify-self: start; }
+
+.app[data-theme="dark"] .one-time-secret { background: #3a3016; border-color: #8e6a1c; }
+.app[data-theme="dark"] .one-time-secret p { color: #f2cd73; }
+.app[data-theme="dark"] .secret-value code { background: #192b3d; border-color: #8e6a1c; color: #f6f8fb; }
+.app[data-theme="dark"] .state-active, .app[data-theme="dark"] .invite-accepted { color: #7fd8c9; }
+.app[data-theme="dark"] .state-must_change_password, .app[data-theme="dark"] .invite-pending { color: #f2cd73; }
+.app[data-theme="dark"] .state-suspended, .app[data-theme="dark"] .state-disabled, .app[data-theme="dark"] .invite-revoked { color: #ff9aa6; }
+.app[data-theme="dark"] .method-card.selected { border-color: #9fc0ff; }
+.app[data-theme="dark"] button.danger { border-color: #ff9aa6; color: #ff9aa6; }
+
+@media (prefers-color-scheme: dark) {
+  .auth-page { background: #101e2c; color: #e7edf4; }
+  .auth-card { background: #192b3d; border-color: #35495b; box-shadow: none; }
+  .auth-card input { background: #101e2c; border-color: #35495b; color: inherit; }
+  .invite-facts dt, .text-link-button { color: #b0c0d1; }
+  .auth-notice { background: #3a3016; color: #f2cd73; }
+  .auth-result { background: #17413c; color: #7fd8c9; }
+}
+
+@media (max-width: 1200px) {
+  .users-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .users-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .users-filters .search-field { grid-column: 1 / -1; }
+}
+@media (max-width: 720px) {
+  .users-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .users-filters { grid-template-columns: 1fr; }
+  .users-table th:nth-child(3), .users-table td:nth-child(3), .users-table th:nth-child(6), .users-table td:nth-child(6) { display: none; }
+  .auth-card { padding: 24px 18px; }
+}

@@ -13,7 +13,7 @@ class ScenarioManagementTest extends TestCase
 
     public function fixture(): array
     {
-        $user = User::factory()->create();
+        $user = User::factory()->platformOwner()->create();
         $this->actingAs($user);
         $project = $this->postJson('/api/projects', ['name' => 'Scenario project'])->assertCreated()->json('data.id');
         $suite = $this->postJson("/api/projects/$project/suites", ['name' => 'Core', 'position' => 0, 'archived' => false])->assertCreated()->json('data.id');

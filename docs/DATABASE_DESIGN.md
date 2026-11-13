@@ -33,3 +33,15 @@ Local development currently uses the isolated cluster owner role. Production ini
 | evidence_files | Project FK; owner is an issue (composite FK), step result or retest attempt (`num_nonnulls >= 1`); kind CHECK; unique random path; mime, size, sha256, uploader |
 
 Files live on the private `evidence` disk, never under `public`. Backups must include the evidence archive (infra/backup.sh).
+
+## User management (migration 2026_11_13_000001)
+
+| Table / column | Purpose and constraints |
+|---|---|
+| users.platform_role | NULL, `owner` or `admin` (CHECK) |
+| users.status | `active`, `suspended`, `disabled` (CHECK); `status_reason`, `status_changed_at` |
+| users.must_change_password, password_changed_at, last_login_at, created_by, version | Lifecycle and optimistic version; unique index on `lower(email)` |
+| invitations | email (lower-case CHECK), project_id + project_role (both NULL or role in manager/tester/viewer), invited_by, `token_hash` (SHA-256, unique), status pending/accepted/revoked (expiry derived from `expires_at`), accepted/revoked fields, send_count, version; partial unique index: one pending per (email, project) |
+| account_activities | Append-only account audit: actor, subject user, invitation, project, action, JSON metadata (no secrets), IP |
+
+`password_reset_tokens` (Laravel) stores hashed reset tokens. No hard deletion of users.

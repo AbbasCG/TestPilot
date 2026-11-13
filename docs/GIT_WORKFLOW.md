@@ -54,6 +54,10 @@ PHPUnit / PostgreSQL / Playwright / TypeScript / ESLint / Build
 - [ ] الموافقة على الدمج
 ```
 
+## Branch used for user management (2026-11-13)
+
+`feature/user-management` from `dev` → PR into `dev` (Arabic description) → rolling PR `dev` → `main` after approval.
+
 ## Continuous integration
 
 `.github/workflows/ci.yml` runs on pushes to `main`/`dev` and on every PR: Pint, PostgreSQL 18 backend tests, ESLint/oxlint, TypeScript, Vite build (asserting all seven Thmanyah faces are bundled), and Playwright in Chromium against an isolated `testpilot_e2e` database. It needs no repository secrets; the database password is a CI-only value.

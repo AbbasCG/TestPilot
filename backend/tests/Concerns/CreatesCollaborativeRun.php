@@ -14,7 +14,7 @@ trait CreatesCollaborativeRun
      */
     protected function collaborativeRun(?callable $customize = null): array
     {
-        $a = User::factory()->create();
+        $a = User::factory()->platformOwner()->create();
         $b = User::factory()->create();
         $this->actingAs($a);
         $p = $this->postJson('/api/projects', ['name' => 'Collaboration'])->json('data.id');

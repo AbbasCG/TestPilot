@@ -42,4 +42,14 @@ class UserFactory extends Factory
             'email_verified_at' => null,
         ]);
     }
+
+    public function platformOwner(): static
+    {
+        return $this->state(fn () => ['platform_role' => 'owner']);
+    }
+
+    public function platformAdmin(): static
+    {
+        return $this->state(fn () => ['platform_role' => 'admin']);
+    }
 }

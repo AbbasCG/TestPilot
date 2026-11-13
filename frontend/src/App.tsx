@@ -8,8 +8,11 @@ import {
   Link,
   useNavigate,
   useParams,
+  useSearchParams,
 } from "react-router-dom";
 import {
+  MutationCache,
+  QueryCache,
   QueryClient,
   QueryClientProvider,
   useMutation,
@@ -34,6 +37,7 @@ import {
   Settings,
   ShieldCheck,
   Sun,
+  UserCog,
   Users,
 } from "lucide-react";
 import { api, ApiError } from "./api";
@@ -43,8 +47,24 @@ import { ProjectMaintenance } from "./testing/ProjectMaintenance";
 import { RunManagement } from "./testing/RunManagement";
 import { IssueManagement } from "./issues/IssueManagement";
 import { AnalyticsSection, ProjectComparison } from "./analytics/Analytics";
+import { AcceptInvitation, ChangePasswordForm, ForcedPasswordChange, ForgotPassword, InactiveAccount, ResetPassword } from "./users/AccountScreens";
+import { TeamMembers } from "./users/TeamMembers";
+import { UsersAdmin } from "./users/UsersAdmin";
 
-const client = new QueryClient({
+// Server-side account gates: an inactive account leaves the app; a pending
+// temporary-password change re-reads the profile so the change screen appears.
+function onAccountError(error: unknown) {
+  if (!(error instanceof ApiError)) return;
+  if (error.code === "account_inactive") {
+    client.clear();
+    if (window.location.pathname !== "/account-inactive") window.location.replace("/account-inactive");
+  } else if (error.code === "password_change_required") {
+    client.invalidateQueries({ queryKey: ["user"] });
+  }
+}
+const client: QueryClient = new QueryClient({
+  queryCache: new QueryCache({ onError: onAccountError }),
+  mutationCache: new MutationCache({ onError: onAccountError }),
   defaultOptions: {
     queries: {
       retry: (count, e) =>
@@ -85,8 +105,12 @@ const loginSchema = z.object({
   email: z.email("أدخل بريدًا إلكترونيًا صحيحًا"),
   password: z.string().min(1, "أدخل كلمة المرور"),
 });
+function safeNext(value: string | null): string {
+  return value && value.startsWith("/") && !value.startsWith("//") ? value : "/";
+}
 function Login() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const cache = useQueryClient();
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -99,7 +123,7 @@ function Login() {
     onSuccess: (data) => {
       cache.clear();
       cache.setQueryData(["user"], data);
-      navigate("/");
+      navigate(safeNext(params.get("next")));
     },
   });
   return (
@@ -167,7 +191,12 @@ function Login() {
               <ArrowLeft size={18} />
             </button>
           </form>
-          <p className="hint">للحصول على حساب، تواصل مع مسؤول مساحة العمل.</p>
+          <p className="hint">
+            <Link className="text-link" to="/forgot-password">
+              نسيت كلمة المرور؟
+            </Link>
+          </p>
+          <p className="hint">للحصول على حساب، اطلب دعوة من مسؤول مساحة العمل.</p>
         </div>
       </section>
     </main>
@@ -190,6 +219,10 @@ function Shell() {
   if (me.isPending) return <Loading />;
   if (me.error instanceof ApiError && me.error.status === 401)
     return <Navigate to="/login" replace />;
+  if (me.error instanceof ApiError && me.error.code === "account_inactive")
+    return <Navigate to="/account-inactive" replace />;
+  if (me.data?.data.must_change_password)
+    return <ForcedPasswordChange user={me.data.data} onLogout={() => logout.mutate()} />;
   if (me.error || !me.data)
     return (
       <main className="content">
@@ -216,6 +249,11 @@ function Shell() {
           <NavLink to="/projects">
             <FolderKanban size={20} /> المشاريع
           </NavLink>
+          {(me.data.data.platform_role === "owner" || me.data.data.platform_role === "admin") && (
+            <NavLink to="/admin/users">
+              <UserCog size={20} /> إدارة المستخدمين
+            </NavLink>
+          )}
           <NavLink to="/settings">
             <Settings size={20} /> الإعدادات
           </NavLink>
@@ -260,6 +298,9 @@ function Shell() {
               path="/settings"
               element={<SettingsPage user={me.data.data} />}
             />
+            {(me.data.data.platform_role === "owner" || me.data.data.platform_role === "admin") && (
+              <Route path="/admin/users/*" element={<UsersAdmin me={me.data.data} />} />
+            )}
             <Route
               path="*"
               element={
@@ -598,7 +639,7 @@ function ProjectDetail() {
         <Route path="issues/*" element={<IssueManagement project={p} />} />
         <Route path="analytics/*" element={<AnalyticsSection project={p} />} />
         <Route index element={<ProjectOverview project={p} />} />
-        <Route path="team" element={<Team project={p} />} />
+        <Route path="team" element={<TeamMembers project={p} />} />
         <Route
           path="edit"
           element={
@@ -720,78 +761,6 @@ function ProjectOverview({ project: p }: { project: Project }) {
     </div>
   );
 }
-function Team({ project: p }: { project: Project }) {
-  const refresh = useRefreshProject(p.id);
-  const form = useForm<{ email: string; role: string }>({
-    defaultValues: { role: "tester" },
-  });
-  const add = useMutation({
-    mutationFn: (data: { email: string; role: string }) =>
-      api(`/api/projects/${p.id}/members`, "PUT", data),
-    onSuccess: () => {
-      form.reset();
-      refresh();
-    },
-  });
-  return (
-    <section className="panel padded">
-      <h2>أعضاء الفريق</h2>
-      <div className="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>الاسم</th>
-              <th>البريد الإلكتروني</th>
-              <th>الصلاحية</th>
-            </tr>
-          </thead>
-          <tbody>
-            {p.members?.map((m) => (
-              <tr key={m.id}>
-                <td>{m.name}</td>
-                <td>
-                  <span dir="ltr">{m.email}</span>
-                </td>
-                <td>{roles[m.role]}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {p.role === "owner" && (
-        <form
-          className="member-form"
-          onSubmit={form.handleSubmit((v) => add.mutate(v))}
-        >
-          <h3>إضافة عضو أو تحديث صلاحياته</h3>
-          <p className="muted">يجب أن يكون للعضو حساب موجود في مساحة العمل.</p>
-          <label>
-            البريد الإلكتروني
-            <input
-              type="email"
-              dir="ltr"
-              {...form.register("email", { required: true })}
-              required
-            />
-          </label>
-          <label>
-            الصلاحية
-            <select {...form.register("role")}>
-              <option value="tester">مختبر</option>
-              <option value="manager">مدير</option>
-              <option value="viewer">مشاهد</option>
-            </select>
-          </label>
-          <ErrorNote error={add.error} />
-          <button className="primary" disabled={add.isPending}>
-            حفظ العضوية
-          </button>
-          {add.isSuccess && <p role="status">تم حفظ العضوية.</p>}
-        </form>
-      )}
-    </section>
-  );
-}
 function EditProject({ project: p }: { project: Project }) {
   const refresh = useRefreshProject(p.id);
   const form = useForm<ProjectInput & { status: string }>({
@@ -868,6 +837,11 @@ function SettingsPage({ user }: { user: User }) {
           هذا الجهاز.
         </p>
       </section>
+      <section className="panel padded">
+        <h2>تغيير كلمة المرور</h2>
+        <p className="hint">بعد التغيير تُنهى جلساتك على الأجهزة الأخرى.</p>
+        <ChangePasswordForm onChanged={() => undefined} />
+      </section>
     </>
   );
 }
@@ -877,6 +851,10 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/invite/:token" element={<AcceptInvitation />} />
+          <Route path="/account-inactive" element={<InactiveAccount />} />
           <Route path="/*" element={<Shell />} />
         </Routes>
       </BrowserRouter>

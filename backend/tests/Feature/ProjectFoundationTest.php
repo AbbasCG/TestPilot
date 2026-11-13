@@ -35,7 +35,7 @@ class ProjectFoundationTest extends TestCase
 
     public function test_roles_and_owner_invariant_are_enforced(): void
     {
-        $owner = User::factory()->create();
+        $owner = User::factory()->platformOwner()->create();
         $tester = User::factory()->create();
         $manager = User::factory()->create();
         $this->actingAs($owner);
