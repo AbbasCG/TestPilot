@@ -141,10 +141,14 @@ class AdminUserController extends Controller
             return response()->json(['data' => ['method' => 'invitation', ...InvitationController::delivery($invitation, $token)]], 201);
         }
         $manual = $data['password_mode'] === 'manual' ? $data['temporary_password'] : null;
-        [$user, $generated] = $this->accounts->createWithTemporaryPassword($actor, $data, $manual);
-        if ($project) {
-            $this->memberships->upsert($project, $actor, $user, $data['project_role'], via: 'account_creation');
-        }
+        [$user, $generated] = DB::transaction(function () use ($actor, $data, $manual, $project) {
+            [$user, $generated] = $this->accounts->createWithTemporaryPassword($actor, $data, $manual);
+            if ($project) {
+                $this->memberships->upsert($project, $actor, $user, $data['project_role'], via: 'account_creation');
+            }
+
+            return [$user, $generated];
+        });
 
         // The generated password is returned exactly once and is never stored in plain text or logged.
         return response()->json(['data' => ['method' => 'temporary_password', 'user' => $this->summary($user), 'temporary_password' => $generated]], 201);

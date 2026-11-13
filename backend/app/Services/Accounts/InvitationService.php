@@ -6,6 +6,7 @@ use App\Models\Invitation;
 use App\Models\Project;
 use App\Models\User;
 use App\Notifications\InvitationNotification;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
@@ -131,20 +132,26 @@ class InvitationService
             abort_unless($invitation->state() === 'pending', 410, 'انتهت صلاحية هذه الدعوة أو استُخدمت أو أُلغيت. اطلب دعوة جديدة.');
             $existing = User::whereRaw('lower(email) = ?', [$invitation->email])->lockForUpdate()->first();
             if ($existing) {
-                abort_unless($current && $current->id === $existing->id, 409, 'سجّل الدخول بالحساب المدعو ثم افتح الرابط مرة أخرى.');
-                abort_unless($existing->isActive(), 403, 'لا يمكن قبول الدعوة بهذا الحساب حاليًا. تواصل مع المسؤول.');
+                abort_unless($current && $current->id === $existing->id, 409, 'إذا كان لديك حساب بهذا البريد فسجّل الدخول به ثم افتح الرابط مرة أخرى.');
+                abort_unless($existing->isActive() && ! $existing->must_change_password, 403, 'لا يمكن قبول الدعوة بهذا الحساب حاليًا. غيّر كلمة المرور المؤقتة أو تواصل مع المسؤول.');
                 $user = $existing;
             } else {
                 abort_if($current !== null, 409, 'أنت مسجّل بحساب آخر. سجّل الخروج ثم افتح رابط الدعوة.');
+                abort_unless($invitation->project_id || ($inviter && $inviter->isActive() && $inviter->isPlatformAdmin()), 410, 'لم تعد هذه الدعوة صالحة. اطلب دعوة جديدة.');
                 $user = new User(['name' => $data['name'], 'email' => $invitation->email, 'password' => $data['password']]);
-                $user->forceFill(['status' => 'active', 'must_change_password' => false, 'password_changed_at' => now(), 'email_verified_at' => now(), 'created_by' => $invitation->invited_by, 'version' => 1])->save();
+                try {
+                    $user->forceFill(['status' => 'active', 'must_change_password' => false, 'password_changed_at' => now(), 'email_verified_at' => now(), 'created_by' => $invitation->invited_by, 'version' => 1])->save();
+                } catch (UniqueConstraintViolationException) {
+                    abort(409, 'إذا كان لديك حساب بهذا البريد فسجّل الدخول به ثم افتح الرابط مرة أخرى.');
+                }
                 $this->audit->record('account.created', null, $user->id, ['method' => 'invitation'], $invitation->id, $invitation->project_id);
             }
+            $inviter = User::find($invitation->invited_by);
             if ($invitation->project_id) {
                 $project = Project::findOrFail($invitation->project_id);
+                abort_unless($inviter && $this->memberships->canManage($inviter, $project), 410, 'لم تعد هذه الدعوة صالحة. اطلب دعوة جديدة.');
                 $isMember = $project->members()->where('users.id', $user->id)->exists();
                 if (! $isMember) {
-                    $inviter = User::find($invitation->invited_by) ?? $user;
                     $this->memberships->upsert($project, $inviter, $user, $invitation->project_role, authorize: false, via: 'invitation');
                 }
             }
@@ -153,6 +160,18 @@ class InvitationService
 
             return $user;
         });
+    }
+
+    /** Revokes every pending invitation sent by a user who lost the authority to send it. */
+    public function revokeSentBy(User $actor, int $inviterId): int
+    {
+        $ids = Invitation::where('invited_by', $inviterId)->where('status', 'pending')->pluck('id');
+        foreach ($ids as $id) {
+            Invitation::whereKey($id)->update(['status' => 'revoked', 'revoked_at' => now(), 'revoked_by' => $actor->id]);
+            $this->audit->record('invitation.revoked', $actor, null, ['reason' => 'inviter_lost_access'], $id);
+        }
+
+        return $ids->count();
     }
 
     public function deliveryMode(): string

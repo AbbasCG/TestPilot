@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\Invitation;
+use App\Models\Project;
 use App\Models\User;
+use App\Services\Accounts\InvitationService;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
@@ -112,7 +114,7 @@ class UserManagementTest extends TestCase
 
         Auth::forgetGuards();
         $this->app['auth']->guard('web')->logout();
-        $this->getJson("/api/invite/$token")->assertOk()->assertJsonPath('data.state', 'pending')->assertJsonPath('data.account_exists', false)
+        $this->getJson("/api/invite/$token")->assertOk()->assertJsonPath('data.state', 'pending')->assertJsonPath('data.account_exists', null)
             ->assertJsonPath('data.project.name', 'Team')->assertJsonMissingPath('data.token_hash');
         $this->postJson("/api/invite/$token/accept", ['name' => 'مختبر جديد', 'password' => 'short', 'password_confirmation' => 'short'])->assertUnprocessable();
         $this->withHeaders($this->origin())->postJson("/api/invite/$token/accept", ['name' => 'مختبر جديد', 'password' => self::NEW_PASSWORD, 'password_confirmation' => self::NEW_PASSWORD])
@@ -167,8 +169,11 @@ class UserManagementTest extends TestCase
         $token = $this->postJson("/api/projects/$project/invitations", ['email' => 'existing@example.test', 'role' => 'manager'])->assertCreated()->json('data.token');
         Auth::forgetGuards();
         $this->app['auth']->guard('web')->logout();
-        $this->postJson("/api/invite/$token/accept")->assertConflict();
-        $this->actingAs($stranger)->postJson("/api/invite/$token/accept")->assertConflict();
+        $this->getJson("/api/invite/$token")->assertJsonPath('data.account_exists', null);
+        $this->postJson("/api/invite/$token/accept")->assertUnprocessable()->assertJsonValidationErrors(['name', 'password']);
+        $this->postJson("/api/invite/$token/accept", ['name' => 'محاول', 'password' => self::NEW_PASSWORD, 'password_confirmation' => self::NEW_PASSWORD])->assertConflict();
+        $this->actingAs($stranger)->postJson("/api/invite/$token/accept", ['name' => 'غريب', 'password' => self::NEW_PASSWORD, 'password_confirmation' => self::NEW_PASSWORD])->assertConflict();
+        $this->actingAs($existing)->getJson("/api/invite/$token")->assertJsonPath('data.account_exists', true);
         $this->actingAs($existing)->postJson("/api/invite/$token/accept")->assertOk();
         $this->assertDatabaseHas('project_members', ['project_id' => $project, 'user_id' => $existing->id, 'role' => 'manager']);
         $this->assertSame(1, User::where('email', 'existing@example.test')->count());
@@ -266,5 +271,28 @@ class UserManagementTest extends TestCase
         $this->assertFalse($user->fresh()->must_change_password);
         $this->postJson('/api/password/reset', ['token' => $token, 'email' => 'reset@example.test', 'password' => 'Another-Secret-2026', 'password_confirmation' => 'Another-Secret-2026'])->assertUnprocessable();
         $this->login('reset@example.test', self::NEW_PASSWORD)->assertOk();
+    }
+
+    public function test_invitations_lose_force_when_the_inviter_loses_authority_and_temporary_accounts_cannot_accept(): void
+    {
+        $owner = User::factory()->platformOwner()->create();
+        $admin = User::factory()->platformAdmin()->create();
+        $project = $this->actingAs($owner)->postJson('/api/projects', ['name' => 'Authority'])->json('data.id');
+        $owned = User::find($owner->id);
+        $token = app(InvitationService::class)->create($admin, 'friend@example.test', Project::find($project), 'manager')[1];
+        $second = app(InvitationService::class)->create($admin, 'other@example.test', Project::find($project), 'tester')[1];
+        $this->putJson("/api/admin/users/{$admin->id}/platform-role", ['platform_role' => null])->assertOk();
+        $this->assertSame(0, Invitation::where('status', 'pending')->count());
+        Auth::forgetGuards();
+        $this->app['auth']->guard('web')->logout();
+        $this->postJson("/api/invite/$token/accept", ['name' => 'صديق', 'password' => self::NEW_PASSWORD, 'password_confirmation' => self::NEW_PASSWORD])->assertStatus(410);
+        $this->postJson("/api/invite/$second/accept", ['name' => 'آخر', 'password' => self::NEW_PASSWORD, 'password_confirmation' => self::NEW_PASSWORD])->assertStatus(410);
+        $this->assertDatabaseMissing('users', ['email' => 'friend@example.test']);
+
+        $temporary = $this->actingAs($owned)->postJson('/api/admin/users', ['name' => 'مؤقت', 'email' => 'temp@example.test', 'method' => 'temporary_password', 'password_mode' => 'generate'])->json('data.temporary_password');
+        $invite = $this->postJson("/api/projects/$project/invitations", ['email' => 'temp@example.test', 'role' => 'tester'])->assertCreated()->json('data.token');
+        $this->login('temp@example.test', $temporary)->assertOk();
+        $this->postJson("/api/invite/$invite/accept")->assertForbidden();
+        $this->assertDatabaseMissing('project_members', ['project_id' => $project, 'user_id' => User::where('email', 'temp@example.test')->value('id')]);
     }
 }

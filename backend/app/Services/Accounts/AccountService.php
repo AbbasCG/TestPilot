@@ -3,6 +3,7 @@
 namespace App\Services\Accounts;
 
 use App\Models\User;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -58,7 +59,11 @@ class AccountService
                 throw ValidationException::withMessages(['email' => 'يوجد حساب بهذا البريد بالفعل.']);
             }
             $user = new User(['name' => $data['name'], 'email' => $email, 'password' => $manualPassword ?? $generated]);
-            $user->forceFill(['platform_role' => $role, 'status' => 'active', 'must_change_password' => true, 'created_by' => $actor->id, 'version' => 1])->save();
+            try {
+                $user->forceFill(['platform_role' => $role, 'status' => 'active', 'must_change_password' => true, 'created_by' => $actor->id, 'version' => 1])->save();
+            } catch (UniqueConstraintViolationException) {
+                throw ValidationException::withMessages(['email' => 'يوجد حساب بهذا البريد بالفعل.']);
+            }
             $this->audit->record('account.created', $actor, $user->id, ['method' => 'temporary_password', 'generated' => $generated !== null, 'platform_role' => $role]);
 
             return $user;
@@ -79,6 +84,7 @@ class AccountService
         $generated = $manualPassword === null ? $this->generatePassword() : null;
         DB::transaction(function () use ($actor, $target, $manualPassword, $generated) {
             $locked = User::lockForUpdate()->findOrFail($target->id);
+            $this->assertCanManage($actor, $locked);
             $locked->forceFill(['password' => $manualPassword ?? $generated, 'must_change_password' => true, 'remember_token' => Str::random(60), 'version' => $locked->version + 1])->save();
             $this->revokeSessions($locked->id);
             $this->audit->record('account.password_reset_by_admin', $actor, $locked->id, ['generated' => $generated !== null]);
@@ -116,6 +122,7 @@ class AccountService
 
         return DB::transaction(function () use ($actor, $target, $status, $reason) {
             $locked = User::lockForUpdate()->findOrFail($target->id);
+            $this->assertCanManage($actor, $locked);
             abort_if($locked->status === $status, 409, 'الحساب بهذه الحالة بالفعل.');
             if ($status !== 'active' && $locked->isPlatformOwner()) {
                 $this->assertAnotherActiveOwner($locked->id);
@@ -124,6 +131,7 @@ class AccountService
             $locked->forceFill(['status' => $status, 'status_reason' => $status === 'active' ? null : $reason, 'status_changed_at' => now(), 'remember_token' => Str::random(60), 'version' => $locked->version + 1])->save();
             if ($status !== 'active') {
                 $this->revokeSessions($locked->id);
+                app(InvitationService::class)->revokeSentBy($actor, $locked->id);
             }
             $this->audit->record('account.status_changed', $actor, $locked->id, ['from' => $from, 'to' => $status, 'reason' => $reason]);
 
@@ -142,6 +150,10 @@ class AccountService
             }
             $from = $locked->platform_role;
             $locked->forceFill(['platform_role' => $role, 'version' => $locked->version + 1])->save();
+            if ($from !== null && $role === null) {
+                // Former admins keep only invitations that their remaining project-owner rights cover (checked again at acceptance).
+                app(InvitationService::class)->revokeSentBy($actor, $locked->id);
+            }
             $this->audit->record('account.platform_role_changed', $actor, $locked->id, ['from' => $from, 'to' => $role]);
 
             return $locked;

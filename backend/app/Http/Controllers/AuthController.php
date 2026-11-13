@@ -63,7 +63,7 @@ class AuthController extends Controller
         ]);
         $user = $request->user();
         $this->accounts->changeOwnPassword($user, $data['current_password'], $data['password'], $request->session()->getId());
-        $request->session()->regenerate();
+        $request->session()->regenerate(true);
 
         return response()->json(['data' => $user->refresh()->toSelfArray()]);
     }
@@ -81,7 +81,9 @@ class AuthController extends Controller
         if (! config('testpilot.mail_enabled')) {
             return response()->json(['data' => ['mail_enabled' => false, 'message' => 'البريد الإلكتروني غير مُعدّ في مساحة العمل هذه، لذلك لا تُرسل روابط استعادة. تواصل مع مسؤول المنصة ليصدر لك كلمة مرور مؤقتة.']]);
         }
-        Password::broker()->sendResetLink(['email' => strtolower($data['email'])]);
+        $email = strtolower($data['email']);
+        // Sent after the response so latency is the same for known and unknown addresses.
+        dispatch(fn () => Password::broker()->sendResetLink(['email' => $email]))->afterResponse();
 
         return response()->json(['data' => ['mail_enabled' => true, 'message' => 'إذا كان البريد مسجلًا لدينا فستصلك رسالة تحتوي رابط إعادة التعيين خلال دقائق. الرابط صالح لمدة محدودة ويُستخدم مرة واحدة.']]);
     }

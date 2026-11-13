@@ -124,7 +124,8 @@ class InvitationController extends Controller
             'state' => $invitation->state(), 'email' => $invitation->email, 'expires_at' => $invitation->expires_at,
             'project' => $project ? ['name' => $project->name] : null, 'project_role' => $invitation->project_role,
             'inviter' => User::find($invitation->invited_by)?->name,
-            'account_exists' => $accountExists,
+            // Only the signed-in invitee learns whether the account exists; anyone else holding the link does not.
+            'account_exists' => $current && strtolower($current->email) === $invitation->email ? $accountExists : null,
             'signed_in' => $current ? ['email' => $current->email, 'is_invitee' => strtolower($current->email) === $invitation->email] : null,
         ]]);
     }
@@ -135,12 +136,15 @@ class InvitationController extends Controller
         abort_unless($invitation, 404, 'رابط الدعوة غير صالح.');
         $current = $request->user('sanctum');
         $isNew = ! User::whereRaw('lower(email) = ?', [$invitation->email])->exists();
-        $data = $isNew ? $request->validate([
+        $isInvitee = $current && strtolower($current->email) === $invitation->email;
+        // Anonymous callers always provide name and password first, so the response
+        // shape does not reveal whether an account already exists for the address.
+        $data = $isInvitee ? [] : $request->validate([
             'name' => ['required', 'string', 'min:2', 'max:120'],
             'password' => ['required', 'string', 'confirmed', AccountService::passwordRule()],
-        ]) : [];
+        ]);
         $user = $this->invitations->accept($token, $current, $data);
-        if ($isNew) {
+        if ($isNew && ! $current) {
             Auth::guard('web')->login($user);
             $request->session()->regenerate();
             $user->forceFill(['last_login_at' => now()])->saveQuietly();
