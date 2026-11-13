@@ -1,4 +1,12 @@
-export type User = { id: number; name: string; email: string };
+export type User = {
+  id: number;
+  name: string;
+  email: string;
+  platform_role?: "owner" | "admin" | null;
+  status?: "active" | "suspended" | "disabled";
+  must_change_password?: boolean;
+  password_changed_at?: string | null;
+};
 export type Member = User & { role: string };
 export type Project = {
   id: number;
@@ -24,9 +32,13 @@ export type Page<T> = {
 };
 export class ApiError extends Error {
   status: number;
-  constructor(message: string, status: number) {
+  code?: string;
+  payload: Record<string, unknown>;
+  constructor(message: string, status: number, code?: string, payload: Record<string, unknown> = {}) {
     super(message);
     this.status = status;
+    this.code = code;
+    this.payload = payload;
   }
 }
 export async function api<T>(
@@ -56,6 +68,8 @@ export async function api<T>(
     throw new ApiError(
       validation || payload.message || "تعذّر الاتصال بالخادم. حاول مرة أخرى.",
       response.status,
+      payload.code,
+      payload,
     );
   }
   return response.status === 204 ? (undefined as T) : response.json();

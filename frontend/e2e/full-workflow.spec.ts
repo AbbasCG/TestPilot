@@ -54,8 +54,9 @@ test("complete collaborative QA lifecycle ends in a verified report", async ({ p
   await page.getByRole("link", { name: "أعضاء الفريق" }).click();
   await page.getByLabel("البريد الإلكتروني", { exact: true }).fill("tester@e2e.test");
   await page.getByRole("combobox", { name: "الصلاحية", exact: true }).selectOption("tester");
-  await page.getByRole("button", { name: "حفظ العضوية" }).click();
-  await expect(page.getByRole("cell", { name: "tester@e2e.test" })).toBeVisible();
+  await page.getByRole("button", { name: "متابعة" }).click();
+  await page.getByRole("button", { name: "إضافته مباشرة بدور «مختبر»" }).click();
+  await expect(page.getByRole("cell", { name: "tester@e2e.test", exact: true })).toBeVisible();
 
   // 2. Suite and a ready scenario from the two-person template.
   await page.getByRole("link", { name: "الاختبارات", exact: true }).click();

@@ -49,9 +49,12 @@ test("real session, project wizard, environment, membership, persistence and log
   await page
     .getByRole("combobox", { name: "الصلاحية", exact: true })
     .selectOption("tester");
-  await page.getByRole("button", { name: "حفظ العضوية" }).click();
+  await page.getByRole("button", { name: "متابعة" }).click();
+  await page
+    .getByRole("button", { name: "إضافته مباشرة بدور «مختبر»" })
+    .click();
   await expect(
-    page.getByRole("cell", { name: "tester@e2e.test" }),
+    page.getByRole("cell", { name: "tester@e2e.test", exact: true }),
   ).toBeVisible();
   await page.reload();
   await expect(
