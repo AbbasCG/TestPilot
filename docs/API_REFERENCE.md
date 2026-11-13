@@ -49,3 +49,30 @@ Scenario, suite and run endpoints are listed in backend/routes/api.php (M3–M4)
 | GET | `/api/projects/{id}/analytics?days=7|30|90&build=` | Full report (results, runs, issues, retests, testers, history, trends, builds, readiness) |
 | GET | `/api/projects/{id}/reports/export?format=csv|json|md&dataset=summary|runs|issues|testers` | Attachment download, audited |
 | GET | `/api/analytics/projects` | Comparison across the caller's member projects |
+
+## User management (2026-11-13)
+
+All authenticated routes pass `account.usable`: inactive accounts get `403 {code: account_inactive}`, temporary-password accounts get `403 {code: password_change_required}` except on `GET /api/user`, `POST /api/logout`, `POST /api/account/password`.
+
+| Method | Path | Behavior |
+|---|---|---|
+| GET | `/api/user` | Self: id, name, email, platform_role, status, must_change_password, password_changed_at |
+| POST | `/api/account/password` | `{current_password, password, password_confirmation}`; clears must_change_password; revokes other sessions |
+| GET | `/api/auth/options` | Public `{mail_enabled}` |
+| POST | `/api/password/forgot` | Public `{email}`; identical response for any address; e-mail only when mail is enabled |
+| POST | `/api/password/reset` | Public `{token, email, password, password_confirmation}` (Laravel broker) |
+| GET | `/api/invite/{token}` | Public preview: state, email, project name, role, inviter, expiry; `account_exists` only for the signed-in invitee |
+| POST | `/api/invite/{token}/accept` | New account `{name, password, password_confirmation}` (signs in); existing account must be signed in as the invitee |
+| GET/POST | `/api/projects/{p}/invitations` | Project owner or platform admin; POST `{email, role}` → `{invitation, delivery, token?}` (token only when mail is disabled) |
+| POST | `/api/projects/{p}/members/resolve` | `{email}` → member / pending_invitation / unknown (non-admins) or not_found / existing_active / existing_inactive (admins) |
+| PUT | `/api/projects/{p}/members` | Change an existing member's role; platform admins may add an existing active account directly |
+| POST | `/api/invitations/{id}/resend` · `/revoke` | Resend rotates the token |
+| GET | `/api/admin/users` | Platform admins: `search, state, platform_role, project_id, sort, direction, page` + `summary` |
+| GET | `/api/admin/users/lookup?email=` | Account summary + pending invitations |
+| POST | `/api/admin/users` | `{email, method: invitation|temporary_password, name, project_id, project_role, platform_role (owner only), password_mode: generate|manual, temporary_password}`; `409 {code: account_exists, user}` for duplicates; generated password returned once |
+| GET/PATCH | `/api/admin/users/{id}` | Detail (projects, activity, invitations) / `{name, version}` |
+| PUT | `/api/admin/users/{id}/platform-role` | Platform owner only `{platform_role}` |
+| POST | `/api/admin/users/{id}/status` | `{status: active|suspended|disabled, reason}` |
+| POST | `/api/admin/users/{id}/temporary-password` | `{password_mode, temporary_password?}` |
+| PUT/DELETE | `/api/admin/users/{id}/memberships[/{project}]` | `{project_id, role}` |
+| GET | `/api/admin/projects`, `/api/admin/invitations` | Selection list; invitations with `state, search` |

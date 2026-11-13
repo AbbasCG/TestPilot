@@ -14,6 +14,15 @@ Sources: FOUNDATION_REQUEST.md (M1–M4), CONTINUATION_REQUIREMENTS.md (M2–M5)
 - M7 Tharaa: `php artisan testpilot:import-tharaa owner@email [--dry-run]` — additive, idempotent, never creates accounts or touches Tharaa. 6 suites, 13 scenarios from Tharaa's verified demo scenario document (b7785e2), each with A/B steps, prerequisites, test data, expected results and shared checkpoints, starting with TEST-TEACHER-001. THR-AUD-143 imported as an open, triaged Known Issue. Kifah tours scenario is a draft because the tours are not deployed on Demo (Tharaa doc B11).
 - M8: review-driven hardening (see CLAUDE_HANDOFF), concurrency/security/accessibility Playwright gates, deployment asset fixes for uploads.
 
+## User management (2026-11-13, branch feature/user-management)
+
+- Platform roles (owner/admin) separate from project roles; account states active/suspended/disabled plus mandatory temporary-password change, enforced server-side on every API route.
+- «إدارة المستخدمين»: overview with summary, search, filters, sorting, pagination; create-user wizard (lookup → details → invitation or temporary password); user detail with memberships, platform role, suspend/disable/reactivate, temporary password reissue and account activity timeline; invitations management.
+- Secure invitations (hashed single-use tokens, expiry, resend rotation, revoke, inviter re-check); invitation acceptance page; forced first-login change; settings password change; forgot/reset password (mail only when configured, honest UI otherwise); suspended-account screen.
+- «أعضاء الفريق» rebuilt on the same flows: Arabic states instead of "The selected email is invalid", no account enumeration for non-admin project owners.
+- Verification: 46 PostgreSQL tests / 690 assertions; TypeScript, lint (2 old warnings), build; Playwright user-management journey with four independent browser contexts plus the updated existing specs. Independent security review: no Critical/High; all Medium and actionable Low findings fixed with tests.
+- Not included: hard account deletion, breached-password check, SSO/2FA. CLI only for the first platform owner.
+
 ## Local readiness (2026-11-12)
 
 - `main` (6b7067a) contains M1–M8, fonts and workflow; GitHub Actions green.
