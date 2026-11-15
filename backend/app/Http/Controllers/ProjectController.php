@@ -125,12 +125,9 @@ class ProjectController extends Controller
         return response()->noContent();
     }
 
-    public function dashboard(Request $request)
+    public function dashboard(Request $request): JsonResponse
     {
-        return response()->json(['data' => [
-            'projects' => $request->user()->projects()->count(),
-            'active_projects' => $request->user()->projects()->where('status', 'active')->count(),
-            'environments' => DB::table('environments')->whereIn('project_id', $request->user()->projects()->select('projects.id'))->count(),
-        ]]);
+        return response()->json(['data' => $this->service->dashboard($request->user())])
+            ->header('Cache-Control', 'no-store');
     }
 }

@@ -132,8 +132,13 @@ test("complete collaborative QA lifecycle ends in a verified report", async ({ p
   await expect(page.locator(".issue-badges").getByText("جاهزة لإعادة الاختبار")).toBeVisible();
 
   // 7. Tester B retests v2.0.1 with evidence; the issue becomes verified. Owner closes it.
-  await tester.goto(issuePath);
-  await tester.getByRole("link", { name: "تنفيذ إعادة الاختبار" }).click();
+  await tester.goto("/");
+  const work = tester.getByRole("region", { name: "قائمة مهامي" });
+  await expect(work.locator(`a[href="${new URL(runUrl).pathname}"]`)).toBeVisible();
+  const criticalIssues = tester.getByRole("region", { name: "المشكلات الحرجة والمعطّلة" });
+  await expect(criticalIssues.locator(`a[href="${issuePath}"]`)).toBeVisible();
+  await work.getByRole("button", { name: "إعادات الاختبار" }).click();
+  await work.locator(`a[href="${issuePath}/retest"]`).click();
   await expect(tester.getByRole("heading", { name: "إعادة الاختبار — المحاولة 1" })).toBeVisible();
   await tester.getByLabel("الملف", { exact: true }).setInputFiles({ name: "accept-ok.png", mimeType: "image/png", buffer: PNG });
   await tester.getByRole("button", { name: "رفع الدليل" }).click();
