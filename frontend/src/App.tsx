@@ -23,7 +23,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
-  Activity,
   ArrowLeft,
   ArrowRight,
   Boxes,
@@ -47,6 +46,7 @@ import { ProjectMaintenance } from "./testing/ProjectMaintenance";
 import { RunManagement } from "./testing/RunManagement";
 import { IssueManagement } from "./issues/IssueManagement";
 import { AnalyticsSection, ProjectComparison } from "./analytics/Analytics";
+import { QualityOverview } from "./analytics/QualityOverview";
 import { AcceptInvitation, ChangePasswordForm, ForcedPasswordChange, ForgotPassword, InactiveAccount, ResetPassword } from "./users/AccountScreens";
 import { TeamMembers } from "./users/TeamMembers";
 import { UsersAdmin } from "./users/UsersAdmin";
@@ -397,47 +397,14 @@ function ProjectTable({ projects }: { projects: Project[] }) {
   );
 }
 function Dashboard() {
-  const stats = useQuery({
-    queryKey: ["dashboard"],
-    queryFn: () =>
-      api<{
-        data: {
-          projects: number;
-          active_projects: number;
-          environments: number;
-        };
-      }>("/api/dashboard"),
-  });
   const projects = useQuery({
     queryKey: ["projects", 1],
     queryFn: () => api<Page<Project>>("/api/projects"),
   });
-  const metrics = [
-    { icon: FolderKanban, label: "المشاريع", value: stats.data?.data.projects },
-    {
-      icon: Activity,
-      label: "المشاريع النشطة",
-      value: stats.data?.data.active_projects,
-    },
-    { icon: Boxes, label: "بيئات العمل", value: stats.data?.data.environments },
-  ];
   return (
     <>
-      <PageTitle
-        title="نظرة واضحة على الجودة"
-        text="مشاريعك وبيئاتك، من بيانات مساحة العمل مباشرة."
-        action={<NewProjectLink />}
-      />
-      <ErrorNote error={stats.error || projects.error} />
-      <div className="stats">
-        {metrics.map((m) => (
-          <section className="stat" key={m.label}>
-            <m.icon size={22} />
-            <span>{m.label}</span>
-            <strong>{m.value ?? "—"}</strong>
-          </section>
-        ))}
-      </div>
+      <QualityOverview action={<NewProjectLink />} />
+      <ErrorNote error={projects.error} />
       <section className="panel">
         <div className="panel-title">
           <h2>آخر المشاريع</h2>

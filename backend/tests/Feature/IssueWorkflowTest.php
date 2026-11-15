@@ -63,6 +63,11 @@ class IssueWorkflowTest extends TestCase
             ->assertJsonPath('data.status', 'ready_for_retest')->assertJsonPath('data.retests.0.status', 'pending')->assertJsonPath('data.retests.0.snapshot.step.title', $issue['step']['title'])->json('data');
         $this->move($p, $issue, 'verified')->assertUnprocessable();
         $retest = $issue['retests'][0];
+        $this->getJson('/api/dashboard')->assertOk()->assertJsonPath('data.my_pending_retests', 0);
+        $this->actingAs($b)->getJson('/api/dashboard')->assertOk()
+            ->assertJsonPath('data.my_pending_retests', 1)
+            ->assertJsonPath('data.my_retests.0.issue_id', $issue['id']);
+        $this->actingAs($a);
         $outcome = ['version' => $retest['version'], 'status' => 'failed', 'actual_result' => 'ما زال الزر لا يستجيب', 'verified' => true];
         $this->putJson("/api/projects/$p/retests/{$retest['id']}", $outcome)->assertForbidden();
 

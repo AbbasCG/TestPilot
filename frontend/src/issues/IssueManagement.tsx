@@ -292,7 +292,16 @@ function CreateIssue({ project: p }: { project: Project }) {
   const prefill = useMemo(() => (run.data && resultId ? buildReproduction(run.data.data, resultId) : null), [run.data, resultId]);
   if (p.role === "viewer") return <p className="empty">ليس لديك صلاحية إنشاء مشكلات.</p>;
   if (runId && run.isPending) return <Busy />;
-  return <IssueForm key={prefill ? "prefilled" : "blank"} project={p} prefill={prefill} resultId={prefill ? resultId : null} run={run.data?.data ?? null} onCreated={(issue) => { cache.invalidateQueries({ queryKey: ["testing", p.id] }); navigate(`/projects/${p.id}/issues/${issue.id}`); }} error={run.error} />;
+  return (
+    <IssueForm key={prefill ? "prefilled" : "blank"} project={p} prefill={prefill}
+      resultId={prefill ? resultId : null} run={run.data?.data ?? null} error={run.error}
+      onCreated={(issue) => {
+        cache.invalidateQueries({ queryKey: ["testing", p.id] });
+        cache.invalidateQueries({ queryKey: ["dashboard"] });
+        navigate(`/projects/${p.id}/issues/${issue.id}`);
+      }}
+    />
+  );
 }
 
 function IssueForm({ project: p, prefill, resultId, run, onCreated, error }: { project: Project; prefill: ReturnType<typeof buildReproduction>; resultId: number | null; run: Run | null; onCreated: (issue: Issue) => void; error: Error | null }) {
@@ -426,6 +435,7 @@ function IssueDetail({ project: p }: { project: Project }) {
     cache.invalidateQueries({ queryKey: ["testing", p.id, "issues-summary"] });
     cache.invalidateQueries({ queryKey: ["testing", p.id, "my-retests"] });
     cache.invalidateQueries({ queryKey: ["activity", p.id] });
+    cache.invalidateQueries({ queryKey: ["dashboard"] });
   };
   if (query.isPending || me.isPending) return <Busy />;
   if (!query.data || !me.data) return <Notice error={query.error || me.error} />;
@@ -467,7 +477,13 @@ function IssueDetail({ project: p }: { project: Project }) {
             )}
             {issue.permissions.upload && issue.status !== "closed" && <EvidenceUpload projectId={p.id} target={{ issue_id: issue.id }} onUploaded={() => query.refetch()} />}
           </section>
-          <RetestHistory project={p} issue={issue} retests={issue.retests} canManage={issue.permissions.manage} onChanged={() => query.refetch()} />
+          <RetestHistory project={p} issue={issue} retests={issue.retests} canManage={issue.permissions.manage}
+            onChanged={() => {
+              void cache.invalidateQueries({ queryKey: ["testing", p.id, "my-retests"] });
+              void cache.invalidateQueries({ queryKey: ["dashboard"] });
+              void query.refetch();
+            }}
+          />
           <Comments project={p} issue={issue} onSaved={setData} />
         </div>
         <aside className="issue-side">
@@ -946,6 +962,7 @@ function RetestScreen({ project: p }: { project: Project }) {
     onSuccess: (data) => {
       cache.setQueryData(["testing", p.id, "issue", issueId], data);
       cache.invalidateQueries({ queryKey: ["testing", p.id] });
+      cache.invalidateQueries({ queryKey: ["dashboard"] });
       navigate(`/projects/${p.id}/issues/${issueId}`);
     },
   });

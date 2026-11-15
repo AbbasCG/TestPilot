@@ -38,7 +38,19 @@ export function Runner({ project: p }: { project: Project }) {
   const me = useQuery({ queryKey: ['user'], queryFn: () => api<{ data: User }>('/api/user') })
   const [summary, setSummary] = useState(''); const [outcome, setOutcome] = useState('passed'); const [showHistory, setShowHistory] = useState(false)
   const history = useQuery({ queryKey: ['testing', p.id, 'run-history', runId], queryFn: () => api<{ data: { id: number; actor_id: number; version: number; step_result_id: number; content: { status: string; actual_result: string }; created_at: string }[] }>(`/api/projects/${p.id}/runs/${runId}/history`), enabled: showHistory, refetchInterval: showHistory ? 5000 : false })
-  const transition = useMutation({ mutationFn: (action: string) => api<{ data: Run }>(`/api/projects/${p.id}/runs/${runId}/transition`, 'POST', { action, version: query.data!.data.version, ...(action === 'complete' ? { outcome, summary } : {}) }), onSuccess: data => { cache.setQueryData(key, data); cache.invalidateQueries({ queryKey: ['testing', p.id, 'runs'] }); cache.invalidateQueries({ queryKey: ['activity', p.id] }) } })
+  const transition = useMutation({
+    mutationFn: (action: string) => api<{ data: Run }>(`/api/projects/${p.id}/runs/${runId}/transition`, 'POST', {
+      action,
+      version: query.data!.data.version,
+      ...(action === 'complete' ? { outcome, summary } : {}),
+    }),
+    onSuccess: data => {
+      cache.setQueryData(key, data)
+      cache.invalidateQueries({ queryKey: ['testing', p.id, 'runs'] })
+      cache.invalidateQueries({ queryKey: ['dashboard'] })
+      cache.invalidateQueries({ queryKey: ['activity', p.id] })
+    },
+  })
   if (query.isPending || me.isPending) return <Busy />
   if (!query.data || !me.data) return <Notice error={query.error || me.error} />
   const run = query.data.data; const user = me.data.data; const manager = user.id === run.created_by || ['owner', 'manager'].includes(p.role); const participant = run.participants.some(x => x.user_id === user.id); const canControl = p.role !== 'viewer' && (manager || participant)
