@@ -134,7 +134,7 @@ test("complete collaborative QA lifecycle ends in a verified report", async ({ p
   // 7. Tester B retests v2.0.1 with evidence; the issue becomes verified. Owner closes it.
   await tester.goto("/");
   const work = tester.getByRole("region", { name: "قائمة مهامي" });
-  await expect(work.locator(`a[href="${new URL(runUrl).pathname}"]`)).toBeVisible();
+  await expect(work.locator(`a[href="${runUrl}"]`)).toBeVisible();
   const criticalIssues = tester.getByRole("region", { name: "المشكلات الحرجة والمعطّلة" });
   await expect(criticalIssues.locator(`a[href="${issuePath}"]`)).toBeVisible();
   await work.getByRole("button", { name: "إعادات الاختبار" }).click();
