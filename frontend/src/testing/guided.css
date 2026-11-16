@@ -49,3 +49,6 @@
   .guided-save button { width: 100%; }
   .guided-failures li { flex-direction: column; align-items: flex-start; }
 }
+
+.guided-partners { list-style: none; padding: 0; margin: 12px 0; display: grid; gap: 6px; }
+.guided-partners li { padding: 8px 12px; border: 1px solid var(--line); border-inline-start: 4px solid var(--primary, #2563eb); border-radius: 8px; overflow-wrap: anywhere; }
