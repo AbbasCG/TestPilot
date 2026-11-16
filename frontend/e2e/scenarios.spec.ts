@@ -52,6 +52,14 @@ test("scenario builder saves ordered steps and retains previous revisions", asyn
   await page
     .getByLabel("عنوان السيناريو", { exact: true })
     .fill("دعوة مشتركة محفوظة");
+  const stepDetails = page
+    .getByRole("button", { name: /تفاصيل إضافية للخطوة/ })
+    .first();
+  await expect(stepDetails).toHaveAttribute("aria-expanded", "false");
+  await expect(page.getByLabel("رابط الصفحة").first()).toHaveCount(0);
+  await stepDetails.click();
+  await expect(stepDetails).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByLabel("رابط الصفحة").first()).toBeVisible();
   await page.screenshot({
     path: "test-results/scenario-builder.png",
     fullPage: true,

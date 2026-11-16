@@ -623,6 +623,42 @@ function ScenarioEditor({
                     <option value="both">الطرفان مستقلان</option>
                   </select>
                 </label>
+              </div>
+              <label>
+                النتيجة المتوقعة للخطوة
+                <textarea aria-label="النتيجة المتوقعة للخطوة"
+                  required
+                  maxLength={5000}
+                  value={step.expected_result}
+                  onChange={(e) =>
+                    changeStep(index, { expected_result: e.target.value })
+                  }
+                />
+              </label>
+              {step.type === "shared_checkpoint" && (
+                <label>
+                  معيار نقطة التحقق المشتركة
+                  <input
+                    required
+                    value={step.checkpoint || ""}
+                    onChange={(e) =>
+                      changeStep(index, { checkpoint: e.target.value })
+                    }
+                  />
+                </label>
+              )}
+              <label className="check-label">
+                <input
+                  type="checkbox"
+                  checked={step.evidence_required}
+                  onChange={(e) =>
+                    changeStep(index, { evidence_required: e.target.checked })
+                  }
+                />{" "}
+                دليل مطلوب لإثبات النتيجة
+              </label>
+              <Disclosure title="تفاصيل إضافية للخطوة" hint="الصفحة، الزر أو الحقل، القيمة، التعليمات، الاعتماديات">
+                <div className="field-grid">
                 <label>
                   رابط الصفحة
                   <input
@@ -650,18 +686,7 @@ function ScenarioEditor({
                     }
                   />
                 </label>
-              </div>
-              <label>
-                النتيجة المتوقعة للخطوة
-                <textarea aria-label="النتيجة المتوقعة للخطوة"
-                  required
-                  maxLength={5000}
-                  value={step.expected_result}
-                  onChange={(e) =>
-                    changeStep(index, { expected_result: e.target.value })
-                  }
-                />
-              </label>
+                </div>
               <label>
                 تعليمات تفصيلية
                 <textarea aria-label="تعليمات تفصيلية"
@@ -670,28 +695,6 @@ function ScenarioEditor({
                     changeStep(index, { instructions: e.target.value })
                   }
                 />
-              </label>
-              {step.type === "shared_checkpoint" && (
-                <label>
-                  معيار نقطة التحقق المشتركة
-                  <input
-                    required
-                    value={step.checkpoint || ""}
-                    onChange={(e) =>
-                      changeStep(index, { checkpoint: e.target.value })
-                    }
-                  />
-                </label>
-              )}
-              <label className="check-label">
-                <input
-                  type="checkbox"
-                  checked={step.evidence_required}
-                  onChange={(e) =>
-                    changeStep(index, { evidence_required: e.target.checked })
-                  }
-                />{" "}
-                دليل مطلوب لإثبات النتيجة
               </label>
               {index > 0 && (
                 <fieldset className="dependencies">
@@ -714,6 +717,7 @@ function ScenarioEditor({
                   ))}
                 </fieldset>
               )}
+              </Disclosure>
             </div>
           </section>
         ))}
