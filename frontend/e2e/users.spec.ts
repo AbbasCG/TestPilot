@@ -109,10 +109,17 @@ test("admin creates accounts, invites, forces password change and suspends from 
   await page.goto("/admin/users");
   await page.getByRole("searchbox").fill(tempEmail);
   await page.getByRole("button", { name: "بحث", exact: true }).click();
+  await expect(page.locator(".active-filters")).toContainText("1 فلتر مفعّل");
+  await page.getByRole("button", { name: "مسح الفلاتر" }).click();
+  await expect(page.locator(".active-filters")).toHaveCount(0);
+  await expect(page.getByRole("searchbox")).toHaveValue("");
+  await page.getByRole("searchbox").fill(tempEmail);
+  await page.getByRole("button", { name: "بحث", exact: true }).click();
   await page.getByRole("link", { name: /حساب مؤقت/ }).click();
   await page.getByRole("textbox", { name: "سبب الإيقاف" }).fill("اختبار الإيقاف المؤقت");
   await page.getByRole("button", { name: "تعليق الحساب" }).click();
   await expect(page.locator(".issue-badges").getByText("معلّق")).toBeVisible();
+  await expect(page.locator(".account-banner")).toContainText("الوصول متوقف حاليًا");
   await temp.page.goto("/");
   // Sessions are revoked on suspension, so the user is either signed out or shown the inactive screen.
   await expect(temp.page).toHaveURL(/\/(login|account-inactive)$/);

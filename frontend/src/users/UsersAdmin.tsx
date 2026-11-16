@@ -77,11 +77,20 @@ function UsersOverview() {
     </button>
   );
   const cards = [
-    { icon: Users, label: "كل المستخدمين", value: s?.total, filter: "" },
-    { icon: CheckCircle2, label: "نشطون", value: s?.active, filter: "active" },
-    { icon: KeyRound, label: "بانتظار تغيير كلمة المرور", value: s?.must_change_password, filter: "must_change_password" },
-    { icon: Ban, label: "معلّقون أو معطّلون", value: s?.inactive, filter: "suspended" },
+    { icon: Users, label: "كل المستخدمين", value: s?.total, filter: "", tone: "" },
+    { icon: CheckCircle2, label: "نشطون", value: s?.active, filter: "active", tone: "ok" },
+    { icon: KeyRound, label: "بانتظار تغيير كلمة المرور", value: s?.must_change_password, filter: "must_change_password", tone: "warn" },
+    { icon: Ban, label: "معلّقون أو معطّلون", value: s?.inactive, filter: "suspended", tone: "bad" },
   ];
+  const filterKeys = ["search", "state", "platform_role", "project_id"];
+  const activeFilters = filterKeys.filter((k) => params.get(k));
+  const clearFilters = () => {
+    const next = new URLSearchParams(params);
+    filterKeys.forEach((k) => next.delete(k));
+    next.delete("page");
+    setSearch("");
+    setParams(next, { replace: true });
+  };
   return (
     <>
       <div className="section-heading">
@@ -97,7 +106,7 @@ function UsersOverview() {
       <Notice error={list.error || projects.error} />
       <div className="stats users-stats">
         {cards.map((c) => (
-          <button type="button" className="stat stat-button" key={c.label} onClick={() => set("state", c.filter)} aria-pressed={(params.get("state") ?? "") === c.filter}>
+          <button type="button" className={`stat stat-button${c.tone ? ` stat-${c.tone}` : ""}`} key={c.label} onClick={() => set("state", c.filter)} aria-pressed={(params.get("state") ?? "") === c.filter}>
             <c.icon size={20} aria-hidden="true" />
             <span>{c.label}</span>
             <strong>{c.value ?? "—"}</strong>
@@ -156,6 +165,16 @@ function UsersOverview() {
           </label>
           <button type="submit">بحث</button>
         </form>
+        {activeFilters.length > 0 && (
+          <div className="active-filters" role="status">
+            <span>
+              {list.data ? `${list.data.total} نتيجة` : "جارٍ البحث…"} · {activeFilters.length} {activeFilters.length === 1 ? "فلتر مفعّل" : "فلاتر مفعّلة"}
+            </span>
+            <button type="button" className="text-button" onClick={clearFilters}>
+              مسح الفلاتر
+            </button>
+          </div>
+        )}
         {list.isPending ? (
           <Busy />
         ) : list.data?.data.length ? (
@@ -543,6 +562,15 @@ function UserDetailPage({ me }: { me: User }) {
         </div>
       </div>
       <Notice error={status.error || role.error || temporary.error || membership.error || removeMembership.error} />
+      {u.status !== "active" && (
+        <div className="account-banner" role="status">
+          <Ban size={20} aria-hidden="true" />
+          <p>
+            <strong>الوصول متوقف حاليًا.</strong> حالة الحساب: {stateLabels[u.state]}.
+            {canManage && !self ? " يمكنك إعادة التفعيل من إجراءات الحساب." : ""}
+          </p>
+        </div>
+      )}
       {secret && <OneTimeSecret kind="password" value={secret} onDone={() => setSecret(null)} />}
       <div className="issue-layout">
         <div className="issue-main">

@@ -181,3 +181,15 @@ button.danger:hover { background: color-mix(in srgb, var(--danger) 10%, transpar
   .users-table th:nth-child(3), .users-table td:nth-child(3), .users-table th:nth-child(6), .users-table td:nth-child(6) { display: none; }
   .auth-card { padding: 24px 18px; }
 }
+
+/* Users admin layout polish */
+.users-stats .stat { border-top: 3px solid var(--line); }
+.users-stats .stat-ok { border-top-color: var(--success); }
+.users-stats .stat-warn { border-top-color: var(--warning); }
+.users-stats .stat-bad { border-top-color: var(--danger); }
+.users-table tbody tr:hover { background: color-mix(in srgb, var(--primary) 5%, transparent); }
+.users-table thead th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
+.active-filters { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px 16px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+.account-banner { display: flex; gap: 12px; align-items: flex-start; padding: 12px 16px; margin-bottom: 16px; border: 1px solid var(--danger); border-radius: 10px; background: color-mix(in srgb, var(--danger) 9%, var(--surface)); color: var(--danger-text); }
+.account-banner p { margin: 0; }
+.account-banner svg { flex: none; margin-top: 2px; }
