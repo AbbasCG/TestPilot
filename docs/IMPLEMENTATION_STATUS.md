@@ -60,3 +60,7 @@ Sources: FOUNDATION_REQUEST.md (M1–M4), CONTINUATION_REQUIREMENTS.md (M2–M5)
 4. Development DB (`testpilot`) has no accounts and is not migrated to the M5 schema from this branch (the main checkout contains an uncommitted Codex draft of the same migration filename). Run `php artisan migrate` after merging, create an owner with `testpilot:user`, then `testpilot:import-tharaa`.
 5. Docker images, TLS, restore drill and remote CI still unverified (Docker daemon unavailable). No deployment, DNS or push performed.
 6. Real-time sync is still polling (3 s on runs).
+
+## Deployment automation (prepared, not executed)
+
+- `.github/workflows/deploy-production.yml`, `infra/deploy/testpilot-deploy.sh` and its offline `selftest.sh` (also run in CI) are written; docs in DEPLOYMENT_AUTOMATION.md. Not yet run on GitHub or the server: no dry run, no deploy. `AUTO_DEPLOY` is not set.

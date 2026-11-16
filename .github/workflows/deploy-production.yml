@@ -1,0 +1,118 @@
+name: Deploy production
+# Deploys a commit of `dev` to https://qa.softbuild.nl through a restricted SSH key.
+#  - automatic: after "TestPilot checks" succeeds for a push to dev, only when the repository variable AUTO_DEPLOY is "true"
+#  - manual: Actions → Deploy production → Run workflow (dry_run is on by default)
+# GitHub runs workflow_run and workflow_dispatch workflows from the DEFAULT branch, so this file must exist on `main`
+# for either trigger to work. See docs/DEPLOYMENT_AUTOMATION.md.
+on:
+  workflow_run:
+    workflows: ['TestPilot checks']
+    types: [completed]
+    branches: [dev]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run: check access, Git, Compose and the commit without changing anything live'
+        type: boolean
+        default: true
+      sha:
+        description: 'Commit to deploy (40 hex). Empty = current head of dev. Must still be the head of dev.'
+        type: string
+        default: ''
+permissions:
+  contents: read
+# One deployment at a time; a queued run waits instead of cancelling a deployment that is already running.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+jobs:
+  deploy:
+    name: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && 'Dry run' || 'Deploy' }}
+    # Automatic runs: CI passed, it was a push, it came from this repository, and auto deploy is switched on.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_branch == 'dev' &&
+       github.event.workflow_run.head_repository.full_name == github.repository &&
+       vars.AUTO_DEPLOY == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment: production
+    env:
+      DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+      DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+      PUBLIC_HEALTH_URL: ${{ vars.PUBLIC_HEALTH_URL }}
+    steps:
+      - name: Resolve what to deploy
+        id: target
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          CI_SHA: ${{ github.event.workflow_run.head_sha }}
+          INPUT_SHA: ${{ inputs.sha }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = workflow_run ]; then
+            sha=$CI_SHA
+            mode=deploy
+          else
+            sha=${INPUT_SHA:-$(gh api "repos/$GITHUB_REPOSITORY/commits/dev" --jq .sha)}
+            mode=$([ "$INPUT_DRY_RUN" = true ] && echo dry-run || echo deploy)
+          fi
+          if ! printf '%s' "$sha" | grep -Eq '^[0-9a-f]{40}$'; then echo "::error::'$sha' is not a 40-character commit SHA"; exit 1; fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+          echo "### Production ${mode}: \`${sha:0:7}\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Prepare SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          for name in DEPLOY_HOST DEPLOY_USER; do
+            if [ -z "${!name}" ]; then echo "::error::Repository variable $name is not set"; exit 1; fi
+          done
+          if [ -z "$DEPLOY_SSH_KEY" ] || [ -z "$DEPLOY_KNOWN_HOSTS" ]; then echo '::error::Secrets DEPLOY_SSH_KEY and DEPLOY_KNOWN_HOSTS are required (environment "production")'; exit 1; fi
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Run on the server (${{ steps.target.outputs.mode }})
+        id: remote
+        env:
+          SHA: ${{ steps.target.outputs.sha }}
+          MODE: ${{ steps.target.outputs.mode }}
+        run: |
+          set +e
+          ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts \
+            -o ConnectTimeout=20 -p "${DEPLOY_PORT:-22}" "$DEPLOY_USER@$DEPLOY_HOST" "$MODE $SHA"
+          code=$?
+          if [ "$code" -eq 3 ]; then
+            echo "::notice::Skipped: ${SHA:0:7} is no longer the head of dev. The run for the newer commit deploys it."
+            echo "### Skipped: a newer commit exists on dev" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if [ "$code" -eq 75 ]; then echo '::error::Another deployment is running on the server'; fi
+          exit "$code"
+
+      - name: Check the public site
+        if: steps.target.outputs.mode == 'deploy' && vars.PUBLIC_HEALTH_URL != ''
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5 6; do
+            if curl -fsS --max-time 15 -o /dev/null "$PUBLIC_HEALTH_URL"; then echo "$PUBLIC_HEALTH_URL returned 200"; exit 0; fi
+            sleep 10
+          done
+          echo "::error::$PUBLIC_HEALTH_URL did not return 200"
+          exit 1
+
+      - name: Remove SSH material
+        if: always()
+        run: rm -rf ~/.ssh
