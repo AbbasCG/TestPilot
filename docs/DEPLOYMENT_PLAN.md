@@ -44,3 +44,7 @@ Current readiness: Compose syntax validated with dummy secrets; no container bui
 - Evidence lives in the `private_storage` volume (never served by Nginx); `backup.sh` now also writes `testpilot-evidence-<stamp>.tar.gz`. Restore both the dump and the archive together; keep APP_KEY.
 - `EVIDENCE_MAX_PROJECT_BYTES` (default 5 GiB) caps evidence per project.
 - Queue and scheduler services unchanged; M5–M7 add no queued jobs. Health, HTTPS and DNS steps unchanged and unexecuted. Docker daemon unavailable locally: image build still unverified.
+
+## Automated deployment (2026-11-16, prepared only)
+
+Manual-then-automatic deployment of `dev` to the existing installation (dry run first, `AUTO_DEPLOY` off until the first manual deploy succeeds) is described in [DEPLOYMENT_AUTOMATION.md](DEPLOYMENT_AUTOMATION.md). Nothing has been run on the VPS.

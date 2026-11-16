@@ -33,6 +33,8 @@ jobs:
       DB_DATABASE: testpilot_test
     steps:
       - uses: actions/checkout@v4
+      - name: Deployment script self-test
+        run: bash infra/deploy/selftest.sh
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
