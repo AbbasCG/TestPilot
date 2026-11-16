@@ -149,18 +149,38 @@ function StepCard({ project: p, run, item, index, total, queryKey, writable, iss
   const reload = () => { setBase(result); setStatus(result.status === "pending" ? "passed" : (result.status as Choice)); setActual(result.actual_result ?? ""); setNotes(result.notes ?? ""); };
   const blockedByEvidence = status === "passed" && needsEvidence && files.length === 0;
   const invalid = happened && actual.trim().length < 3;
+  const mine = run.participants.find((x) => x.id === result.participant_id);
+  const partners = run.participants
+    .filter((x) => x.id !== result.participant_id)
+    .map((x) => ({ who: x, row: run.results.find((r) => r.run_case_id === item.case.id && r.step_key === step.id && r.participant_id === x.id) }))
+    .filter((x) => x.row);
+  const shared = step.assigned_role === "both" || step.type === "shared_checkpoint";
 
   return (
     <article className="guided-card panel padded" aria-label={`الخطوة ${index} من ${total}`}>
       <p className="muted guided-case"><span>{item.case.snapshot.title}</span> <span dir="ltr">TC-{item.case.test_case_id}</span></p>
       <h2 tabIndex={-1} ref={headingRef}>{index}. {step.title}</h2>
-      <p className="muted">{stepTypes[step.type] ?? step.type}</p>
+      <p className="muted">
+        {mine && <span className={`tester-tag tester-${mine.role}`}>Tester {mine.role}</span>} {stepTypes[step.type] ?? step.type}
+        {shared && partners.length > 0 && " · خطوة مشتركة ينفّذها المختبران"}
+      </p>
+      {step.type === "shared_checkpoint" && step.checkpoint && <p className="checkpoint"><strong>{step.checkpoint}</strong></p>}
       <dl className="guided-facts">
         <div><dt>ما المطلوب منك</dt><dd>{step.instructions || step.title}{step.target && <> — <bdi>{step.target}</bdi></>}</dd></div>
         {step.url && <div><dt>الرابط</dt><dd><a className="text-link" href={step.url} target="_blank" rel="noreferrer" dir="ltr">{step.url} <ExternalLink size={13} /></a></dd></div>}
         {step.value && <div><dt>بيانات الاختبار</dt><dd><bdi className="mono">{step.value}</bdi></dd></div>}
         <div className="expected"><dt>النتيجة المتوقعة</dt><dd>{step.expected_result}</dd></div>
       </dl>
+      {shared && partners.length > 0 && (
+        <ul className="guided-partners" aria-label="نتيجة الطرف الآخر لهذه الخطوة">
+          {partners.map(({ who, row }) => (
+            <li key={who.id}>
+              <span className={`tester-tag tester-${who.role}`}>Tester {who.role}</span> <strong>{who.name}</strong>: {stateLabel[row!.status]}
+              {row!.actual_result && <small> — {row!.actual_result}</small>}
+            </li>
+          ))}
+        </ul>
+      )}
       {issue && <Link className="linked-issue" to={`/projects/${p.id}/issues/${issue.id}`}><span dir="ltr">#{issue.number}</span> مشكلة مرتبطة بهذه الخطوة</Link>}
 
       {writable ? (

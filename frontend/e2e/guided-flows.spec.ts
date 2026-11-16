@@ -190,6 +190,7 @@ test("collaborative session: each tester gets own guided steps and waits for the
   await page.goto(`/projects/${project.id}/runs/${run.id}`);
   await expect(page.getByText("الخطوة 1 من 2", { exact: true })).toBeVisible();
   await expect(page.getByText(/مختبر الجودة: 0 من/)).toBeVisible();
+  await expect(page.locator(".guided-card .tester-tag")).toHaveText("Tester A");
   await page.getByRole("link", { name: "كل الخطوات" }).click();
   await expect(page.getByRole("region", { name: "خطوات Tester A" })).toBeVisible();
   await page.getByRole("link", { name: "الخطوة الحالية" }).click();
