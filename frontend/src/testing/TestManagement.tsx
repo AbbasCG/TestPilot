@@ -21,6 +21,7 @@ import type { Project } from "../api";
 import { Busy, Notice, useRefreshTesting } from "./shared";
 import { Library } from "./Library";
 import { Disclosure } from "./Disclosure";
+import { EditorNav, jumpTo, stepAnchor } from "./EditorNav";
 import {
   emptyScenario,
   newStep,
@@ -348,7 +349,8 @@ function ScenarioEditor({
           <Copy size={16} /> استخدام القالب
         </button>
       </div>
-      <section className="panel padded">
+      <EditorNav steps={content.steps} />
+      <section className="panel padded" id="editor-definition" tabIndex={-1}>
         <h3>تعريف الاختبار</h3>
         <label>
           عنوان السيناريو
@@ -512,7 +514,11 @@ function ScenarioEditor({
         <button
           type="button"
           disabled={content.steps.length >= 100}
-          onClick={() => field("steps", [...content.steps, newStep()])}
+          onClick={() => {
+            const added = newStep();
+            field("steps", [...content.steps, added]);
+            window.setTimeout(() => jumpTo(stepAnchor(added.id)), 60);
+          }}
         >
           <Plus size={17} /> إضافة خطوة
         </button>
@@ -521,6 +527,8 @@ function ScenarioEditor({
         {content.steps.map((step, index) => (
           <section
             className="panel step-card"
+            id={stepAnchor(step.id)}
+            tabIndex={-1}
             key={step.id}
             aria-label={`الخطوة ${index + 1}`}
           >

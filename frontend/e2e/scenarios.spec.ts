@@ -60,6 +60,21 @@ test("scenario builder saves ordered steps and retains previous revisions", asyn
   await stepDetails.click();
   await expect(stepDetails).toHaveAttribute("aria-expanded", "true");
   await expect(page.getByLabel("رابط الصفحة").first()).toBeVisible();
+  // In-page navigation: one chip per step jumps to it, moves focus into it and marks it current.
+  const editorNav = page.getByRole("navigation", { name: "أقسام المحرر" });
+  await expect(editorNav).toBeVisible();
+  const stepChips = editorNav.getByRole("button", { name: /^الانتقال إلى الخطوة/ });
+  expect(await stepChips.count()).toBeGreaterThanOrEqual(3);
+  await stepChips.nth(2).click();
+  await expect(page.getByRole("region", { name: "الخطوة 3" })).toBeInViewport();
+  await expect(stepChips.nth(2)).toHaveAttribute("aria-current", "true");
+  await expect(page.getByRole("region", { name: "الخطوة 3" }).getByLabel("عنوان الخطوة")).toBeFocused();
+  const before = await stepChips.count();
+  await page.getByRole("button", { name: /إضافة خطوة/ }).click();
+  await expect(stepChips).toHaveCount(before + 1);
+  await expect(page.getByRole("region", { name: `الخطوة ${before + 1}` }).getByLabel("عنوان الخطوة")).toBeFocused();
+  await page.getByRole("button", { name: `حذف الخطوة ${before + 1}` }).click();
+  await expect(stepChips).toHaveCount(before);
   await page.screenshot({
     path: "test-results/scenario-builder.png",
     fullPage: true,
