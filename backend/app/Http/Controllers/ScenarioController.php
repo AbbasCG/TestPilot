@@ -8,12 +8,14 @@ use App\Models\Project;
 use App\Models\TestCase;
 use App\Models\TestSuite;
 use App\Services\ProjectService;
+use App\Services\Scenarios\ScenarioRules;
 use App\Services\ScenarioService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 
 class ScenarioController extends Controller
 {
@@ -51,9 +53,19 @@ class ScenarioController extends Controller
     public function index(Request $request, Project $project): AnonymousResourceCollection
     {
         Gate::authorize('view', $project);
-        $filters = $request->validate(['suite_id' => 'nullable|integer']);
+        $filters = $request->validate([
+            'suite_id' => 'nullable|integer', 'search' => 'nullable|string|max:120',
+            'status' => ['nullable', Rule::in(ScenarioRules::STATUSES)], 'priority' => ['nullable', Rule::in(ScenarioRules::PRIORITIES)],
+        ]);
+        $like = isset($filters['search']) ? '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], mb_strtolower(trim($filters['search']))).'%' : null;
+        $number = isset($filters['search']) && preg_match('/^(?:tc-)?(\d{1,9})$/i', trim($filters['search']), $m) ? (int) $m[1] : null;
 
-        return ScenarioResource::collection(TestCase::where('project_id', $project->id)->when($filters['suite_id'] ?? null, fn ($q, $id) => $q->where('suite_id', $id))->latest('id')->paginate(50));
+        return ScenarioResource::collection(TestCase::where('project_id', $project->id)
+            ->when($filters['suite_id'] ?? null, fn ($q, $id) => $q->where('suite_id', $id))
+            ->when($filters['status'] ?? null, fn ($q, $status) => $q->where('status', $status))
+            ->when($filters['priority'] ?? null, fn ($q, $priority) => $q->where('priority', $priority))
+            ->when($like, fn ($q) => $q->where(fn ($w) => $w->whereRaw('lower(title) like ?', [$like])->when($number, fn ($x) => $x->orWhere('id', $number))))
+            ->latest('id')->paginate(50));
     }
 
     public function show(Project $project, int $scenario): ScenarioResource
@@ -94,6 +106,15 @@ class ScenarioController extends Controller
     {
         Gate::authorize('view', $project);
 
-        return response()->json(['data' => TestCase::where('project_id', $project->id)->orderBy('title')->get(['id', 'title', 'status', 'suite_id', 'version'])]);
+        $cases = TestCase::where('project_id', $project->id)->orderBy('title')->get(['id', 'title', 'status', 'suite_id', 'version']);
+        $contents = DB::table('scenario_revisions')->join('test_cases', fn ($join) => $join->on('test_cases.id', '=', 'scenario_revisions.test_case_id')->on('test_cases.version', '=', 'scenario_revisions.version'))
+            ->where('test_cases.project_id', $project->id)->pluck('scenario_revisions.content', 'test_cases.id');
+
+        return response()->json(['data' => $cases->map(function ($case) use ($contents) {
+            $content = json_decode($contents[$case->id] ?? '{}', true) ?: [];
+            $reason = ScenarioRules::soloIneligibility($content);
+
+            return [...$case->toArray(), 'steps_count' => count($content['steps'] ?? []), 'solo_eligible' => $reason === null, 'solo_reason' => $reason];
+        })]);
     }
 }

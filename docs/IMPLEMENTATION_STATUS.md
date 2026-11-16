@@ -14,6 +14,29 @@ Sources: FOUNDATION_REQUEST.md (M1–M4), CONTINUATION_REQUIREMENTS.md (M2–M5)
 - M7 Tharaa: `php artisan testpilot:import-tharaa owner@email [--dry-run]` — additive, idempotent, never creates accounts or touches Tharaa. 6 suites, 13 scenarios from Tharaa's verified demo scenario document (b7785e2), each with A/B steps, prerequisites, test data, expected results and shared checkpoints, starting with TEST-TEACHER-001. THR-AUD-143 imported as an open, triaged Known Issue. Kifah tours scenario is a draft because the tours are not deployed on Demo (Tharaa doc B11).
 - M8: review-driven hardening (see CLAUDE_HANDOFF), concurrency/security/accessibility Playwright gates, deployment asset fixes for uploads.
 
+## Redesign and daily test flow (2026-11-16, branch feature/testpilot-next)
+
+- Backend: scenario import from JSON (kit, read-only preview, idempotent confirm, duplicate and changed-since-preview handling, project audit), solo sessions (`test_runs.mode`, server-side eligibility), project quick search, URL-friendly list filters, project `stats`, shared `ScenarioRules` used by both the editor and the importer. PHPUnit on PostgreSQL: 59 tests pass.
+- Frontend: new shell (project switcher, Ctrl/⌘+K palette, mobile bottom bar), home = work list first, projects list with search/stats/«ابدأ الاختبار», next-step checklist on the project overview, scenario library as a URL-filtered table with «إنشاء سيناريو» and «استيراد ملف» (side panel: copy prompt, download template, upload, preview with located errors, confirm, result), advanced scenario settings behind a disclosure, guided runner as default (`?view=all` keeps the full ledger and the final assessment), solo/collaborative session type, focused run page, generic Arabic message for 5xx/network errors.
+- GSAP (`gsap`, `@gsap/react`): step change, import panel, import result, disclosure; all via `gsap.matchMedia()` so reduced motion removes offsets. Bundle JS/gzip: 598.9 kB / 170.0 kB before, 710.1 kB / 208.9 kB after (+37 kB gzip: GSAP core plus new screens; no code splitting yet).
+- Verification: `npm run typecheck`, `npm run build` clean; eslint clean (oxlint keeps a few fast-refresh warnings); Playwright 22 specs pass locally on Chrome, including new `guided-flows.spec.ts` (valid/invalid/duplicate import, URL filters, Ctrl+K, solo run, save failure + retry, resume, evidence-gated step, collaborative empty-role case, reduced motion). Comparison screenshots: `docs/redesign/before-*` / `after-*` (home, scenarios, runner, issue; light/dark 1440, light 390).
+- Not done: page-by-page restyle of analytics, users/admin and auth screens beyond the shared tokens and shell (they work and pass accessibility checks but were not redesigned); the editor remains a single long form; no Tester A/B step view inside the guided runner for «both» steps beyond what the ledger shows; bundle not code-split; no manual screen-reader test.
+
+## User management (2026-11-13, branch feature/user-management)
+
+- Platform roles (owner/admin) separate from project roles; account states active/suspended/disabled plus mandatory temporary-password change, enforced server-side on every API route.
+- «إدارة المستخدمين»: overview with summary, search, filters, sorting, pagination; create-user wizard (lookup → details → invitation or temporary password); user detail with memberships, platform role, suspend/disable/reactivate, temporary password reissue and account activity timeline; invitations management.
+- Secure invitations (hashed single-use tokens, expiry, resend rotation, revoke, inviter re-check); invitation acceptance page; forced first-login change; settings password change; forgot/reset password (mail only when configured, honest UI otherwise); suspended-account screen.
+- «أعضاء الفريق» rebuilt on the same flows: Arabic states instead of "The selected email is invalid", no account enumeration for non-admin project owners.
+- Verification: 46 PostgreSQL tests / 690 assertions; TypeScript, lint (2 old warnings), build; Playwright user-management journey with four independent browser contexts plus the updated existing specs. Independent security review: no Critical/High; all Medium and actionable Low findings fixed with tests.
+- Not included: hard account deletion, breached-password check, SSO/2FA. CLI only for the first platform owner.
+
+## Local readiness (2026-11-12)
+
+- `main` (6b7067a) contains M1–M8, fonts and workflow; GitHub Actions green.
+- Development database migrated to the M5 schema after a verified pg_dump backup; no accounts yet (owner-created via `testpilot:user`).
+- Arabic two-browser runbook: LOCAL_TESTING_GUIDE_AR.md; project-local PHP upload limits for `artisan serve`.
+
 ## Repository and typography (2026-11-12, second session)
 
 - GitHub: https://github.com/AbbasCG/TestPilot. `main` = stable base 7cb15eb (M1–M4); `dev` = M5–M8 plus the typography/workflow work; PR `dev` → `main` open for owner review. Policy in GIT_WORKFLOW.md and CLAUDE.md. CI runs on PRs and pushes to main/dev.

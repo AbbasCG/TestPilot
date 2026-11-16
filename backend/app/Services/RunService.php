@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Models\TestCase;
 use App\Models\TestRun;
 use App\Models\User;
+use App\Services\Scenarios\ScenarioRules;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
@@ -22,6 +23,7 @@ class RunService
             abort_if($project->status === 'archived', 422, 'أعد تفعيل المشروع قبل بدء جلسة.');
             $environment = $project->environments()->where('archived', false)->findOrFail($data['environment_id']);
             $ids = array_column($data['scenarios'], 'id');
+            $mode = $data['mode'] ?? 'collaborative';
             $cases = [];
             $total = 0;
             foreach ($data['scenarios'] as $selection) {
@@ -30,6 +32,9 @@ class RunService
                 abort_if($case->version !== (int) $selection['version'], 409, 'تغيرت نسخة سيناريو. حدّث اختيارك.');
                 abort_if(DB::table('test_suites')->where('id', $case->suite_id)->value('archived'), 422, 'المجموعة مؤرشفة.');
                 $revision = $case->currentRevision();
+                if ($mode === 'solo' && ($reason = ScenarioRules::soloIneligibility($revision->content))) {
+                    abort(422, "السيناريو «{$case->title}» لا يصلح لاختبار فردي: $reason استخدم جلسة تعاونية.");
+                }
                 abort_if(count(array_diff($revision->content['dependencies'], $ids)) > 0, 422, 'اختر جميع السيناريوهات المعتمَد عليها. استخدم كل المجموعات عند الحاجة.');
                 $total += count($revision->content['steps']);
                 $cases[] = [$case, $revision];
@@ -40,11 +45,12 @@ class RunService
             $run->created_by = $actor->id;
             $run->environment_id = $environment->id;
             $run->environment_snapshot = $environment->only(['id', 'name', 'url']);
+            $run->mode = $mode;
             $run->status = 'active';
             $run->version = 1;
             $run->save();
             $participants = [];
-            foreach (['A' => $data['tester_a_id'], 'B' => $data['tester_b_id']] as $role => $userId) {
+            foreach (array_filter(['A' => $data['tester_a_id'], 'B' => $mode === 'solo' ? null : $data['tester_b_id']]) as $role => $userId) {
                 abort_unless($project->members()->where('users.id', $userId)->wherePivotIn('role', ['owner', 'manager', 'tester'])->exists(), 422, 'عضوية المختبر غير صالحة.');
                 $participants[$role] = DB::table('run_participants')->insertGetId(['test_run_id' => $run->id, 'user_id' => $userId, 'role' => $role]);
             }

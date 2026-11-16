@@ -4,6 +4,7 @@ import "./fonts";
 import "./index.css";
 import "./issues/issues.css";
 import "./analytics/analytics.css";
+import "./users/users.css";
 import App from "./App.tsx";
 
 createRoot(document.getElementById("root")!).render(

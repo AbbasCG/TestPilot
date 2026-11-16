@@ -1,21 +1,49 @@
 <?php
 
+use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\IssueController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RunController;
 use App\Http\Controllers\ScenarioController;
-use Illuminate\Http\Request;
+use App\Http\Controllers\ScenarioImportController;
+use App\Http\Controllers\SearchController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', HealthController::class);
 
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
-Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
-    Route::get('/user', fn (Request $request) => response()->json(['data' => $request->user()]));
-    Route::post('/logout', [AuthController::class, 'logout']);
+Route::get('/auth/options', [AuthController::class, 'options']);
+Route::post('/password/forgot', [AuthController::class, 'forgotPassword'])->middleware('throttle:password-recovery');
+Route::post('/password/reset', [AuthController::class, 'resetPassword'])->middleware('throttle:password-recovery');
+Route::get('/invite/{token}', [InvitationController::class, 'preview'])->middleware('throttle:invitation-public');
+Route::post('/invite/{token}/accept', [InvitationController::class, 'accept'])->middleware('throttle:invitation-public');
+Route::middleware(['auth:sanctum', 'account.usable', 'throttle:api'])->group(function () {
+    Route::get('/user', [AuthController::class, 'user'])->name('auth.user');
+    Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout');
+    Route::post('/account/password', [AuthController::class, 'changePassword'])->name('account.password')->middleware('throttle:password-change');
+    Route::get('/projects/{project}/invitations', [InvitationController::class, 'projectIndex']);
+    Route::post('/projects/{project}/invitations', [InvitationController::class, 'projectStore'])->middleware('throttle:invitations');
+    Route::post('/projects/{project}/members/resolve', [InvitationController::class, 'resolve']);
+    Route::post('/invitations/{invitation}/resend', [InvitationController::class, 'resend'])->whereNumber('invitation')->middleware('throttle:invitations');
+    Route::post('/invitations/{invitation}/revoke', [InvitationController::class, 'revoke'])->whereNumber('invitation');
+    Route::prefix('admin')->middleware(['can:manageUsers', 'throttle:admin-actions'])->group(function () {
+        Route::get('/users', [AdminUserController::class, 'index']);
+        Route::post('/users', [AdminUserController::class, 'store'])->middleware('throttle:invitations');
+        Route::get('/users/lookup', [AdminUserController::class, 'lookup']);
+        Route::get('/users/{user}', [AdminUserController::class, 'show'])->whereNumber('user');
+        Route::patch('/users/{user}', [AdminUserController::class, 'update'])->whereNumber('user');
+        Route::put('/users/{user}/platform-role', [AdminUserController::class, 'platformRole'])->whereNumber('user');
+        Route::post('/users/{user}/status', [AdminUserController::class, 'status'])->whereNumber('user');
+        Route::post('/users/{user}/temporary-password', [AdminUserController::class, 'temporaryPassword'])->whereNumber('user');
+        Route::put('/users/{user}/memberships', [AdminUserController::class, 'membership'])->whereNumber('user');
+        Route::delete('/users/{user}/memberships/{project}', [AdminUserController::class, 'removeMembership'])->whereNumber('user')->whereNumber('project');
+        Route::get('/projects', [AdminUserController::class, 'projects']);
+        Route::get('/invitations', [AdminUserController::class, 'invitations']);
+    });
     Route::get('/dashboard', [ProjectController::class, 'dashboard']);
     Route::get('/projects', [ProjectController::class, 'index']);
     Route::post('/projects', [ProjectController::class, 'store']);
@@ -31,10 +59,14 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::put('/projects/{project}/suites/{suite}', [ScenarioController::class, 'saveSuite']);
     Route::get('/projects/{project}/scenarios', [ScenarioController::class, 'index']);
     Route::post('/projects/{project}/scenarios', [ScenarioController::class, 'store']);
-    Route::get('/projects/{project}/scenarios/{scenario}', [ScenarioController::class, 'show']);
+    Route::get('/projects/{project}/scenarios/{scenario}', [ScenarioController::class, 'show'])->whereNumber('scenario');
     Route::put('/projects/{project}/scenarios/{scenario}', [ScenarioController::class, 'update']);
     Route::get('/projects/{project}/scenarios/{scenario}/revisions', [ScenarioController::class, 'revisions']);
     Route::get('/projects/{project}/scenario-templates', [ScenarioController::class, 'templates']);
+    Route::get('/projects/{project}/scenarios/import/kit', [ScenarioImportController::class, 'kit']);
+    Route::post('/projects/{project}/scenarios/import/preview', [ScenarioImportController::class, 'preview'])->middleware('throttle:imports');
+    Route::post('/projects/{project}/scenarios/import', [ScenarioImportController::class, 'store'])->middleware('throttle:imports');
+    Route::get('/projects/{project}/search', SearchController::class)->middleware('throttle:search');
     Route::get('/projects/{project}/scenario-options', [ScenarioController::class, 'options']);
     Route::get('/projects/{project}/runs', [RunController::class, 'index']);
     Route::post('/projects/{project}/runs', [RunController::class, 'store']);

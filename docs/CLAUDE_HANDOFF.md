@@ -1,5 +1,19 @@
 # Claude handoff — 2026-11-12
 
+## Update — user management (2026-11-13)
+
+- Branch `feature/user-management` (from `dev` 87be68d). Backend: `app/Services/Accounts/*`, `AdminUserController`, `InvitationController`, `AuthController`, middleware `EnsureAccountIsUsable` (alias `account.usable`), migration `2026_11_13_000001_add_user_management`, `config/testpilot.php`, commands `testpilot:user --platform-role`, `testpilot:platform-owner`. Frontend: `src/users/*` (UsersAdmin, TeamMembers, AccountScreens, OneTimeSecret, users.css), routes `/admin/users/*`, `/invite/:token`, `/forgot-password`, `/reset-password`, `/account-inactive`.
+- Docs: SECURITY_MODEL.md, USER_MANAGEMENT_GUIDE_AR.md, API_REFERENCE.md, DATABASE_DESIGN.md.
+- After merging: back up and `php artisan migrate` the dev DB, then create the first platform owner via CLI (or promote an existing account with `testpilot:platform-owner`). The E2E seeder makes owner@e2e.test a platform owner.
+- Mail stays disabled (`TESTPILOT_MAIL_ENABLED=false`) until a real mailer is configured; links/passwords are shown once instead.
+
+## Update — local readiness (2026-11-12)
+
+- PR #1 merged by the owner: `main` = `6b7067a`; `dev` fast-forwarded to it (GitHub had deleted `dev` on merge; recreated by push — do not delete `dev`).
+- Development DB `testpilot`: backed up to `.local/backups/db/testpilot-dev-before-m5-20261112T092519Z.dump` (+ .sha256), then `php artisan migrate` applied only the additive M5 migration; tables/constraints verified. It still has **no accounts**: the owner creates them with `testpilot:user` (interactive hidden password), then runs `testpilot:import-tharaa`.
+- Main checkout's untracked font copies (identical to committed files) moved to `.local/backups/fonts-untracked-copy-before-pull` before `git pull --ff-only`. `npm run build` on main emptied `frontend/dist` (original fonts are committed and backed up).
+- Arabic two-browser guide: docs/LOCAL_TESTING_GUIDE_AR.md. Local upload limit fix: infra/php-local/testpilot-uploads.ini via PHP_INI_SCAN_DIR.
+
 ## Update — second session (2026-11-12)
 
 - Remote `origin` = https://github.com/AbbasCG/TestPilot (public). Branches: `main` (7cb15eb, stable M1–M4), `dev` (M5–M8 + typography + workflow), task branch `feature/global-fonts` merged into `dev`. Open PR `dev` → `main` with an Arabic description; do not merge without the owner. Follow GIT_WORKFLOW.md from now on.

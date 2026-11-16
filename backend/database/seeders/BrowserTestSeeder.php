@@ -13,7 +13,8 @@ class BrowserTestSeeder extends Seeder
             throw new \RuntimeException('Browser fixtures require a dedicated *_e2e database and local/testing environment.');
         }
         foreach (['owner', 'tester'] as $role) {
-            User::updateOrCreate(['email' => "$role@e2e.test"], ['name' => $role === 'owner' ? 'مدير الجودة' : 'مختبر الجودة', 'password' => 'TestPilot-e2e-only-2026']);
+            $user = User::updateOrCreate(['email' => "$role@e2e.test"], ['name' => $role === 'owner' ? 'مدير الجودة' : 'مختبر الجودة', 'password' => 'TestPilot-e2e-only-2026']);
+            $user->forceFill(['platform_role' => $role === 'owner' ? 'owner' : null, 'status' => 'active', 'must_change_password' => false])->save();
         }
     }
 }

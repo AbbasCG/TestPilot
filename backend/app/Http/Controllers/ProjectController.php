@@ -6,6 +6,7 @@ use App\Http\Requests\ProjectRequest;
 use App\Http\Resources\ProjectResource;
 use App\Models\Project;
 use App\Models\User;
+use App\Services\Accounts\MembershipService;
 use App\Services\ProjectService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,14 +14,24 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class ProjectController extends Controller
 {
-    public function __construct(private ProjectService $service) {}
+    public function __construct(private ProjectService $service, private MembershipService $memberships) {}
 
     public function index(Request $request)
     {
-        return ProjectResource::collection($request->user()->projects()->withCount('members')->latest('projects.id')->paginate(20));
+        $filters = $request->validate(['search' => 'nullable|string|max:120', 'status' => ['nullable', Rule::in(['active', 'archived'])]]);
+        $like = isset($filters['search']) ? '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], mb_strtolower(trim($filters['search']))).'%' : null;
+        $page = $request->user()->projects()->withCount('members')
+            ->when($filters['status'] ?? null, fn ($q, $status) => $q->where('projects.status', $status))
+            ->when($like, fn ($q) => $q->where(fn ($w) => $w->whereRaw('lower(projects.name) like ?', [$like])->orWhereRaw('lower(coalesce(projects.description, \'\')) like ?', [$like])))
+            ->latest('projects.id')->paginate(20);
+        $stats = $this->service->stats($page->getCollection()->pluck('id')->all());
+        $page->getCollection()->each(fn ($project) => $project->setAttribute('stats', $stats[$project->id]));
+
+        return ProjectResource::collection($page);
     }
 
     public function store(ProjectRequest $request)
@@ -31,8 +42,9 @@ class ProjectController extends Controller
     public function show(Project $project)
     {
         Gate::authorize('view', $project);
+        $project->load(['members', 'environments'])->setAttribute('stats', $this->service->stats([$project->id])[$project->id]);
 
-        return new ProjectResource($project->load(['members', 'environments']));
+        return new ProjectResource($project);
     }
 
     public function update(ProjectRequest $request, Project $project)
@@ -60,21 +72,27 @@ class ProjectController extends Controller
         });
     }
 
+    /**
+     * Changes the role of an existing member, or (platform admins only) adds an
+     * existing active account directly. Everyone else adds people through
+     * invitations, so this endpoint never reveals whether an account exists.
+     */
     public function member(Request $request, Project $project)
     {
         Gate::authorize('view', $project);
-        Gate::authorize('manageMembers', $project);
-        $data = $request->validate(['email' => ['required', 'email', 'exists:users,email'], 'role' => ['required', Rule::in(['manager', 'tester', 'viewer'])]]);
-        $user = User::where('email', $data['email'])->firstOrFail();
-        abort_if($user->id === $project->owner_id, 422, 'لا يمكن تغيير دور المالك.');
-        DB::transaction(function () use ($project, $request, $data, $user) {
-            Project::whereKey($project->id)->lockForUpdate()->firstOrFail();
-            if ($data['role'] === 'viewer') {
-                $this->assertNoActiveRun($project, $user->id);
-            }
-            $project->members()->syncWithoutDetaching([$user->id => ['role' => $data['role']]]);
-            $this->service->audit($project, $request->user(), 'member.updated', ['user_id' => $user->id, 'role' => $data['role']]);
-        });
+        $actor = $request->user();
+        abort_unless($this->memberships->canManage($actor, $project), 403);
+        $data = $request->validate(['email' => ['required', 'email', 'max:255'], 'role' => ['required', Rule::in(MembershipService::ROLES)]]);
+        $email = strtolower($data['email']);
+        $user = User::whereRaw('lower(email) = ?', [$email])->first();
+        $isMember = $user && $project->members()->where('users.id', $user->id)->exists();
+        if (! $isMember && ! $actor->isPlatformAdmin()) {
+            throw ValidationException::withMessages(['email' => 'لإضافة عضو جديد أرسل له دعوة من «إضافة عضو». تعديل الدور متاح للأعضاء الحاليين فقط.']);
+        }
+        if (! $user) {
+            throw ValidationException::withMessages(['email' => 'لا يوجد حساب بهذا البريد. أرسل دعوة أو أنشئ حسابًا من إدارة المستخدمين.']);
+        }
+        $this->memberships->upsert($project, $actor, $user, $data['role']);
 
         return new ProjectResource($project->load(['members', 'environments']));
     }
@@ -112,32 +130,14 @@ class ProjectController extends Controller
     public function removeMember(Request $request, Project $project, int $member): Response
     {
         Gate::authorize('view', $project);
-        Gate::authorize('manageMembers', $project);
-        abort_if($member === $project->owner_id, 422, 'لا يمكن إزالة مالك المشروع.');
-        DB::transaction(function () use ($project, $member, $request) {
-            Project::whereKey($project->id)->lockForUpdate()->firstOrFail();
-            abort_unless($project->members()->where('users.id', $member)->exists(), 404);
-            $this->assertNoActiveRun($project, $member);
-            $project->members()->detach($member);
-            $this->service->audit($project, $request->user(), 'member.removed', ['user_id' => $member]);
-        });
+        $this->memberships->remove($project, $request->user(), $member);
 
         return response()->noContent();
     }
 
-    public function dashboard(Request $request)
+    public function dashboard(Request $request): JsonResponse
     {
-        return response()->json(['data' => [
-            'projects' => $request->user()->projects()->count(),
-            'active_projects' => $request->user()->projects()->where('status', 'active')->count(),
-            'environments' => DB::table('environments')->whereIn('project_id', $request->user()->projects()->select('projects.id'))->count(),
-        ]]);
-    }
-
-    private function assertNoActiveRun(Project $project, int $userId): void
-    {
-        abort_if(DB::table('run_participants')->join('test_runs', 'test_runs.id', '=', 'run_participants.test_run_id')
-            ->where('test_runs.project_id', $project->id)->where('run_participants.user_id', $userId)
-            ->whereIn('test_runs.status', ['active', 'paused'])->exists(), 422, 'المختبر مشارك في جلسة نشطة. أنهِ الجلسة قبل تغيير وصوله.');
+        return response()->json(['data' => $this->service->dashboard($request->user())])
+            ->header('Cache-Control', 'no-store');
     }
 }

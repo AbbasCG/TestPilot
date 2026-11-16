@@ -14,6 +14,7 @@ class ProjectResource extends JsonResource
             'status' => $this->status, 'version' => $this->version, 'owner_id' => $this->owner_id,
             'role' => $this->members()->where('users.id', $request->user()->id)->first()?->pivot->role,
             'members_count' => $this->whenCounted('members'),
+            'stats' => $this->when($this->resource->getAttribute('stats') !== null, fn () => $this->resource->getAttribute('stats')),
             'environments' => $this->whenLoaded('environments'),
             'members' => $this->whenLoaded('members', fn () => $this->members->map(fn ($member) => [
                 'id' => $member->id, 'name' => $member->name, 'email' => $member->email, 'role' => $member->pivot->role,

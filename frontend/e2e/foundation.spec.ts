@@ -18,7 +18,7 @@ test("real session, project wizard, environment, membership, persistence and log
     .fill("TestPilot-e2e-only-2026");
   await page.getByRole("button", { name: "تسجيل الدخول", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "نظرة واضحة على الجودة" }),
+    page.getByRole("heading", { name: "الرئيسية" }),
   ).toBeVisible();
   const name = `اختبار المتصفح ${Date.now()}`;
   await page
@@ -49,9 +49,12 @@ test("real session, project wizard, environment, membership, persistence and log
   await page
     .getByRole("combobox", { name: "الصلاحية", exact: true })
     .selectOption("tester");
-  await page.getByRole("button", { name: "حفظ العضوية" }).click();
+  await page.getByRole("button", { name: "متابعة" }).click();
+  await page
+    .getByRole("button", { name: "إضافته مباشرة بدور «مختبر»" })
+    .click();
   await expect(
-    page.getByRole("cell", { name: "tester@e2e.test" }),
+    page.getByRole("cell", { name: "tester@e2e.test", exact: true }),
   ).toBeVisible();
   await page.reload();
   await expect(
@@ -70,7 +73,7 @@ test("real session, project wizard, environment, membership, persistence and log
     .getByRole("button", { name: "تسجيل الدخول", exact: true })
     .click();
   await expect(
-    tester.getByRole("heading", { name: "نظرة واضحة على الجودة" }),
+    tester.getByRole("heading", { name: "الرئيسية" }),
   ).toBeVisible();
   await tester.goto(projectUrl);
   await expect(

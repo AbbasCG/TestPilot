@@ -49,3 +49,44 @@ Scenario, suite and run endpoints are listed in backend/routes/api.php (M3–M4)
 | GET | `/api/projects/{id}/analytics?days=7|30|90&build=` | Full report (results, runs, issues, retests, testers, history, trends, builds, readiness) |
 | GET | `/api/projects/{id}/reports/export?format=csv|json|md&dataset=summary|runs|issues|testers` | Attachment download, audited |
 | GET | `/api/analytics/projects` | Comparison across the caller's member projects |
+
+## User management (2026-11-13)
+
+All authenticated routes pass `account.usable`: inactive accounts get `403 {code: account_inactive}`, temporary-password accounts get `403 {code: password_change_required}` except on `GET /api/user`, `POST /api/logout`, `POST /api/account/password`.
+
+| Method | Path | Behavior |
+|---|---|---|
+| GET | `/api/user` | Self: id, name, email, platform_role, status, must_change_password, password_changed_at |
+| POST | `/api/account/password` | `{current_password, password, password_confirmation}`; clears must_change_password; revokes other sessions |
+| GET | `/api/auth/options` | Public `{mail_enabled}` |
+| POST | `/api/password/forgot` | Public `{email}`; identical response for any address; e-mail only when mail is enabled |
+| POST | `/api/password/reset` | Public `{token, email, password, password_confirmation}` (Laravel broker) |
+| GET | `/api/invite/{token}` | Public preview: state, email, project name, role, inviter, expiry; `account_exists` only for the signed-in invitee |
+| POST | `/api/invite/{token}/accept` | New account `{name, password, password_confirmation}` (signs in); existing account must be signed in as the invitee |
+| GET/POST | `/api/projects/{p}/invitations` | Project owner or platform admin; POST `{email, role}` → `{invitation, delivery, token?}` (token only when mail is disabled) |
+| POST | `/api/projects/{p}/members/resolve` | `{email}` → member / pending_invitation / unknown (non-admins) or not_found / existing_active / existing_inactive (admins) |
+| PUT | `/api/projects/{p}/members` | Change an existing member's role; platform admins may add an existing active account directly |
+| POST | `/api/invitations/{id}/resend` · `/revoke` | Resend rotates the token |
+| GET | `/api/admin/users` | Platform admins: `search, state, platform_role, project_id, sort, direction, page` + `summary` |
+| GET | `/api/admin/users/lookup?email=` | Account summary + pending invitations |
+| POST | `/api/admin/users` | `{email, method: invitation|temporary_password, name, project_id, project_role, platform_role (owner only), password_mode: generate|manual, temporary_password}`; `409 {code: account_exists, user}` for duplicates; generated password returned once |
+| GET/PATCH | `/api/admin/users/{id}` | Detail (projects, activity, invitations) / `{name, version}` |
+| PUT | `/api/admin/users/{id}/platform-role` | Platform owner only `{platform_role}` |
+| POST | `/api/admin/users/{id}/status` | `{status: active|suspended|disabled, reason}` |
+| POST | `/api/admin/users/{id}/temporary-password` | `{password_mode, temporary_password?}` |
+| PUT/DELETE | `/api/admin/users/{id}/memberships[/{project}]` | `{project_id, role}` |
+| GET | `/api/admin/projects`, `/api/admin/invitations` | Selection list; invitations with `state, search` |
+
+## Scenario import, solo runs, search (migration 2026_11_16_000001)
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/api/projects/{p}/scenarios/import/kit` | Writers (owner/manager/tester): `{template, prompt, limits}`. The template, the AI prompt and the validator share one contract (`schema_version: 1`) |
+| POST | `/api/projects/{p}/scenarios/import/preview` | `{document, suite_id?, suite_name?}` — read-only. Returns `summary {total,new,duplicate,invalid,steps}`, per-scenario `status` (`new`, `duplicate`, `duplicate_in_file`, `invalid`) and located Arabic errors ("السيناريو 3، الخطوة 2: …"). Limits: 1 MB, 100 scenarios, 2000 steps. Throttle `imports` (20/min) |
+| POST | `/api/projects/{p}/scenarios/import` | `{document, idempotency_key (uuid), duplicates: skip|create, expected: {new, duplicate}, acknowledge_changes?, suite_id?}`. Re-validates inside a transaction under a project row lock; creates **drafts** through `ScenarioService::save`; `409 {code: import_changed, preview}` when the project changed since the preview; same key + same payload replays the stored result (`replayed: true`), same key + different payload is `409`. Audited as `scenarios.imported` |
+| GET | `/api/projects/{p}/search?q=` | Scenarios, issues and runs of that project only (title or `TC-12` / `#7`); any member incl. viewers; outsiders get 404. Throttle `search` |
+| GET | `/api/projects/{p}/scenarios?search&status&priority&suite_id&page` | Filters validated; status/priority use the shared enums |
+| GET | `/api/projects?search&status` | Each project also carries `stats` (open issues/critical/sessions, ready scenarios, last run build + environment) |
+| GET | `/api/projects/{p}/scenario-options` | Adds `steps_count`, `solo_eligible`, `solo_reason` |
+| POST | `/api/projects/{p}/runs` | New `mode: collaborative|solo` (default collaborative). Solo needs only `tester_a_id`, and every selected scenario must pass `ScenarioRules::soloIneligibility` (no step for tester B, no shared checkpoint/wait step), otherwise `422` telling the user to use a collaborative session |
+| GET | `/api/projects/{p}/analytics` | Readiness now lists its `environments` and `runs`; `period` echoed |

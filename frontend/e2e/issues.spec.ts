@@ -12,7 +12,7 @@ async function login(page: Page, email: string) {
   await page.getByLabel("البريد الإلكتروني", { exact: true }).fill(email);
   await page.getByLabel("كلمة المرور", { exact: true }).fill("TestPilot-e2e-only-2026");
   await page.getByRole("button", { name: "تسجيل الدخول", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "نظرة واضحة على الجودة" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "الرئيسية" })).toBeVisible();
 }
 
 async function call(page: Page, path: string, method = "GET", body?: unknown) {
@@ -50,7 +50,7 @@ test("failed step becomes an issue with private evidence, fix, independent retes
   const run = (await call(page, `${base}/runs`, "POST", { title: "جلسة اكتشاف الخلل", build_version: "v1.0.0", environment_id: environment.id, suite_id: suite.id, tester_a_id: owner, tester_b_id: testerId, scenarios: [{ id: scenario.id, version: 1 }] })).data;
 
   // Tester A records a real failure in the collaborative runner.
-  await page.goto(`/projects/${project.id}/runs/${run.id}`);
+  await page.goto(`/projects/${project.id}/runs/${run.id}?view=all`);
   const card = page.getByRole("region", { name: "خطوات Tester A", exact: true }).getByRole("article", { name: "نتيجة الخطوة 1", exact: true });
   await card.getByRole("combobox", { name: "نتيجة الخطوة" }).selectOption("failed");
   await card.getByRole("textbox", { name: "النتيجة الفعلية", exact: true }).fill("زر إرسال الدعوة لا يستجيب ولا تظهر رسالة");
@@ -120,7 +120,7 @@ test("failed step becomes an issue with private evidence, fix, independent retes
   await expect(page.locator(".issue-badges").getByText("مغلقة")).toBeVisible();
   await expect(page.locator(".retest-passed")).toContainText("المحاولة 1");
   await expect(page.getByRole("region", { name: "السجل الزمني" })).toContainText("سجّل نتيجة إعادة الاختبار");
-  await page.goto(`/projects/${project.id}/runs/${run.id}`);
+  await page.goto(`/projects/${project.id}/runs/${run.id}?view=all`);
   await expect(page.getByRole("link", { name: /مشكلة مرتبطة · مغلقة/ })).toBeVisible();
   await expect(card.locator(".result-badge.failed")).toBeVisible();
 
