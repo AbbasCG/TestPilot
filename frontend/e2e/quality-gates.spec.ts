@@ -12,7 +12,7 @@ async function login(page: Page, email: string) {
   await page.getByLabel("البريد الإلكتروني", { exact: true }).fill(email);
   await page.getByLabel("كلمة المرور", { exact: true }).fill("TestPilot-e2e-only-2026");
   await page.getByRole("button", { name: "تسجيل الدخول", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "نظرة واضحة على الجودة" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "الرئيسية" })).toBeVisible();
 }
 
 async function headers(page: Page) {

@@ -9,7 +9,7 @@ async function login(page: Page) {
   await page.getByLabel("البريد الإلكتروني", { exact: true }).fill("owner@e2e.test");
   await page.getByLabel("كلمة المرور", { exact: true }).fill("TestPilot-e2e-only-2026");
   await page.getByRole("button", { name: "تسجيل الدخول", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "نظرة واضحة على الجودة" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "الرئيسية" })).toBeVisible();
 }
 
 async function call(page: Page, path: string, method = "GET", data?: unknown) {

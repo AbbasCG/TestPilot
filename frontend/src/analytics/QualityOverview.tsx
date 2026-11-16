@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Activity, Bug, ChevronLeft, ClipboardCheck, FolderKanban, Radar, RefreshCw } from "lucide-react";
+import { Activity, Bug, ChevronLeft, ClipboardCheck, FolderKanban, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
 import { issueStatuses, severities } from "../issues/types";
@@ -35,20 +35,17 @@ export function QualityOverview({ action }: { action: ReactNode }) {
 
   return (
     <div className="quality-overview">
-      <header className="quality-hero">
-        <div className="quality-hero-content">
-          <h1>نظرة واضحة على الجودة</h1>
-          <p>تابع جلساتك، وراجع نتائج الاختبار، واعرف ما يحتاج إلى متابعة.</p>
-          <div className="quality-actions">
-            {action}
-            {data && (
-              <button type="button" onClick={() => void summary.refetch()} disabled={summary.isFetching}>
-                <RefreshCw size={16} /> {summary.isFetching ? "جارٍ التحديث…" : "تحديث اللوحة"}
-              </button>
-            )}
-          </div>
+      <header className="quality-bar">
+        <h1 className="sr-only">الرئيسية</h1>
+        <p className="muted">{data ? "ما يحتاج إلى متابعتك اليوم." : " "}</p>
+        <div className="quality-actions">
+          {action}
+          {data && (
+            <button type="button" onClick={() => void summary.refetch()} disabled={summary.isFetching}>
+              <RefreshCw size={16} /> {summary.isFetching ? "جارٍ التحديث…" : "تحديث"}
+            </button>
+          )}
         </div>
-        <div className="quality-hero-art" aria-hidden="true"><Radar size={94} strokeWidth={0.9} /></div>
       </header>
       <Notice error={summary.error} />
       {summary.isPending ? <Busy /> : data ? <DashboardContent data={data} /> : (
@@ -69,15 +66,6 @@ function DashboardContent({ data }: { data: DashboardSummary }) {
 
   return (
     <>
-      <dl className="quality-metrics" aria-label="مؤشرات الجودة">
-        {metrics.map(({ icon: Icon, label, value, detail, tone }) => (
-          <div className="panel quality-metric" key={label}>
-            <dt><span className={`quality-icon ${tone}`}><Icon size={19} /></span>{label}</dt>
-            <dd>{value}</dd>
-            <dd className="quality-metric-detail">{detail}</dd>
-          </div>
-        ))}
-      </dl>
       <div className="quality-grid">
         <section className="panel quality-panel" aria-labelledby="quality-work-heading">
           <div className="quality-heading">
@@ -92,7 +80,7 @@ function DashboardContent({ data }: { data: DashboardSummary }) {
               <ul className="quality-list">
                 {data.my_runs.map((run) => (
                   <Item key={run.id} item={run} to={`/projects/${run.project_id}/runs/${run.id}`} detail={<bdi>{run.build_version}</bdi>}
-                    badge={resultLabels[run.status]} tone={run.status === "active" ? "teal" : "amber"} />
+                    badge={resultLabels[run.status]} tone={run.status === "active" ? "teal" : "amber"} cta={run.status === "active" ? "أكمل الاختبار" : undefined} />
                 ))}
               </ul>
             ) : <Empty text="لا توجد جلسات جارية تشارك فيها." />
@@ -132,6 +120,15 @@ function DashboardContent({ data }: { data: DashboardSummary }) {
           </ul>
         ) : <Empty text="لا توجد مشكلات حرجة أو معطّلة مفتوحة في المشاريع النشطة." />}
       </section>
+      <dl className="quality-metrics" aria-label="مؤشرات الجودة">
+        {metrics.map(({ icon: Icon, label, value, detail, tone }) => (
+          <div className="panel quality-metric" key={label}>
+            <dt><span className={`quality-icon ${tone}`}><Icon size={19} /></span>{label}</dt>
+            <dd>{value}</dd>
+            <dd className="quality-metric-detail">{detail}</dd>
+          </div>
+        ))}
+      </dl>
     </>
   );
 }
@@ -140,8 +137,8 @@ function Empty({ text }: { text: string }) {
   return <p className="quality-empty">{text}</p>;
 }
 
-function Item({ item, to, detail, badge, tone }: {
-  item: DashboardItem; to: string; detail: ReactNode; badge: string; tone: string;
+function Item({ item, to, detail, badge, tone, cta }: {
+  item: DashboardItem; to: string; detail: ReactNode; badge: string; tone: string; cta?: string;
 }) {
   return (
     <li>
@@ -151,7 +148,7 @@ function Item({ item, to, detail, badge, tone }: {
           <small>{item.project_name} · {detail}</small>
         </span>
         <span className={`quality-badge ${tone}`}>{badge}</span>
-        <ChevronLeft size={17} aria-hidden="true" />
+        {cta ? <span className="quality-cta">{cta}</span> : <ChevronLeft size={17} aria-hidden="true" />}
       </Link>
     </li>
   );

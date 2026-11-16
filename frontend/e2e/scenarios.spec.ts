@@ -14,7 +14,7 @@ test("scenario builder saves ordered steps and retains previous revisions", asyn
     .fill("TestPilot-e2e-only-2026");
   await page.getByRole("button", { name: "تسجيل الدخول", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "نظرة واضحة على الجودة" }),
+    page.getByRole("heading", { name: "الرئيسية" }),
   ).toBeVisible();
   await page
     .getByRole("link", { name: "مشروع جديد", exact: true })
@@ -37,7 +37,7 @@ test("scenario builder saves ordered steps and retains previous revisions", asyn
   await expect(
     page.getByRole("button", { name: "تعديل مجموعة اختبارات القبول" }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "سيناريو جديد" }).click();
+  await page.getByRole("link", { name: "إنشاء سيناريو" }).click();
   await page
     .getByRole("combobox", { name: "ابدأ من قالب" })
     .selectOption("collaboration");

@@ -20,3 +20,12 @@ Plan review: a generic dashboard card grid would conceal the primary work. Use a
 - Scale: body 15px / line-height 1.75; page title 30px / 1.45 serif display 700; section 19px, card titles 16px, labels 13px medium, meta 11–12px. Weights in CSS map to available faces only (no 600/650/750/800).
 - Controls: buttons min-height 40px, inputs 42px, textareas 88px. Table headers medium 500. Numbers in stats use tabular figures.
 - Verified in light/dark at 1440 and 390 px on dashboard, project, scenario builder, issues and analytics (e2e/typography.spec.ts).
+
+## Redesign (2026-11-16, branch feature/testpilot-next)
+
+- Workspace look: neutral surfaces, thin borders, one action colour; green/red/amber result colours always carry text or an icon (`--success/--danger/--warning` plus `-text` variants for contrast, defined in `src/shell.css` for light and dark). The home hero, gradients and decorative art were removed.
+- Shell: right-hand sidebar with a project switcher and quick search (`Ctrl/⌘ + K`); below 768 px the sidebar becomes a bottom bar (home, projects, sessions, scenarios, search, account) and the runner keeps a sticky save button.
+- Layout by task: home = work list first (tasks, critical issues, then counts); scenarios = filterable table whose filters live in the URL (`q, status, priority, suite, page`); runner = one step at a time; issue detail = expected/actual side by side, then history.
+- Guided runner (default for testers, `?view=all` is the full ledger): current step, `الخطوة n من N`, instructions, expected result, test data, three result buttons, «ماذا حدث؟» and attachments for failures; after a save the next available step opens; a failed save keeps the typed text; a version conflict shows the latest result before saving again; session polling never touches the form because the form owns its state.
+- Motion (GSAP, `src/motion.ts`): `useGSAP` with a local scope; every tween is created inside `gsap.matchMedia()` so reduced motion removes offsets and fades; offsets follow the document direction; content is visible before GSAP runs (opacity-only tweens, no `visibility`). Used for: step change after save (160–220 ms, focus moves to the step heading), the import side panel (focus in on open, back to the opener on close), import success confirmation and progress, and the advanced-settings disclosure in the scenario editor. Tables are never animated on refresh.
+- Bundle (production build, JS / gzip): before 598.9 kB / 170.0 kB; after see IMPLEMENTATION_STATUS.
