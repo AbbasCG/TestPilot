@@ -22,7 +22,16 @@ class ProjectController extends Controller
 
     public function index(Request $request)
     {
-        return ProjectResource::collection($request->user()->projects()->withCount('members')->latest('projects.id')->paginate(20));
+        $filters = $request->validate(['search' => 'nullable|string|max:120', 'status' => ['nullable', Rule::in(['active', 'archived'])]]);
+        $like = isset($filters['search']) ? '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], mb_strtolower(trim($filters['search']))).'%' : null;
+        $page = $request->user()->projects()->withCount('members')
+            ->when($filters['status'] ?? null, fn ($q, $status) => $q->where('projects.status', $status))
+            ->when($like, fn ($q) => $q->where(fn ($w) => $w->whereRaw('lower(projects.name) like ?', [$like])->orWhereRaw('lower(coalesce(projects.description, \'\')) like ?', [$like])))
+            ->latest('projects.id')->paginate(20);
+        $stats = $this->service->stats($page->getCollection()->pluck('id')->all());
+        $page->getCollection()->each(fn ($project) => $project->setAttribute('stats', $stats[$project->id]));
+
+        return ProjectResource::collection($page);
     }
 
     public function store(ProjectRequest $request)
@@ -33,8 +42,9 @@ class ProjectController extends Controller
     public function show(Project $project)
     {
         Gate::authorize('view', $project);
+        $project->load(['members', 'environments'])->setAttribute('stats', $this->service->stats([$project->id])[$project->id]);
 
-        return new ProjectResource($project->load(['members', 'environments']));
+        return new ProjectResource($project);
     }
 
     public function update(ProjectRequest $request, Project $project)
