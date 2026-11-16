@@ -45,3 +45,10 @@ Files live on the private `evidence` disk, never under `public`. Backups must in
 | account_activities | Append-only account audit: actor, subject user, invitation, project, action, JSON metadata (no secrets), IP |
 
 `password_reset_tokens` (Laravel) stores hashed reset tokens. No hard deletion of users.
+
+## Import and solo sessions (migration 2026_11_16_000001)
+
+| Table / column | Purpose and constraints |
+|---|---|
+| test_runs.mode | `collaborative` (default; every existing run keeps reading and reporting as before) or `solo` (CHECK). Solo runs have one participant (A) |
+| scenario_imports | Idempotency ledger: project_id, user_id, `idempotency_key` (unique per project), `payload_hash` (SHA-256 of document + options), `result` JSON, created_at. Lets a retry after a network timeout return the first result instead of importing twice |

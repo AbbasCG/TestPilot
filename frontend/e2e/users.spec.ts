@@ -36,7 +36,7 @@ test("admin creates accounts, invites, forces password change and suspends from 
   const inviteEmail = `invited.${stamp}@example.test`;
 
   await login(page, "owner@e2e.test", OWNER_PASSWORD);
-  await expect(page.getByRole("heading", { name: "نظرة واضحة على الجودة" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "الرئيسية" })).toBeVisible();
   await page.getByRole("link", { name: "مشروع جديد", exact: true }).first().click();
   const projectName = `فريق ${stamp}`;
   await page.getByLabel("اسم المشروع", { exact: true }).fill(projectName);
@@ -74,7 +74,7 @@ test("admin creates accounts, invites, forces password change and suspends from 
   await temp.page.getByLabel("كلمة المرور الحالية").fill(temporary);
   await fillNewPassword(temp.page, NEW_PASSWORD);
   await temp.page.getByRole("button", { name: "حفظ كلمة المرور والمتابعة" }).click();
-  await expect(temp.page.getByRole("heading", { name: "نظرة واضحة على الجودة" })).toBeVisible();
+  await expect(temp.page.getByRole("heading", { name: "الرئيسية" })).toBeVisible();
   await temp.page.goto(projectPath);
   await expect(temp.page.getByRole("heading", { name: projectName })).toBeVisible();
 
@@ -108,7 +108,7 @@ test("admin creates accounts, invites, forces password change and suspends from 
   // 4. Suspend the first account from its detail page; its session is cut off.
   await page.goto("/admin/users");
   await page.getByRole("searchbox").fill(tempEmail);
-  await page.getByRole("button", { name: "بحث" }).click();
+  await page.getByRole("button", { name: "بحث", exact: true }).click();
   await page.getByRole("link", { name: /حساب مؤقت/ }).click();
   await page.getByRole("textbox", { name: "سبب الإيقاف" }).fill("اختبار الإيقاف المؤقت");
   await page.getByRole("button", { name: "تعليق الحساب" }).click();
@@ -122,7 +122,7 @@ test("admin creates accounts, invites, forces password change and suspends from 
   await page.getByRole("button", { name: "إعادة تفعيل الحساب" }).click();
   await expect(page.locator(".issue-badges").getByText("نشط")).toBeVisible();
   await login(temp.page, tempEmail, NEW_PASSWORD);
-  await expect(temp.page.getByRole("heading", { name: "نظرة واضحة على الجودة" })).toBeVisible();
+  await expect(temp.page.getByRole("heading", { name: "الرئيسية" })).toBeVisible();
   await expect(page.getByRole("region", { name: "سجل إدارة الحساب" }).or(page.locator(".issue-timeline"))).toContainText("تغيير حالة الحساب");
 
   // 5. Resend rotates the link; revoke disables it.

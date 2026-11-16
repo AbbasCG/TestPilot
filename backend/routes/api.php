@@ -9,6 +9,8 @@ use App\Http\Controllers\IssueController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RunController;
 use App\Http\Controllers\ScenarioController;
+use App\Http\Controllers\ScenarioImportController;
+use App\Http\Controllers\SearchController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', HealthController::class);
@@ -57,10 +59,14 @@ Route::middleware(['auth:sanctum', 'account.usable', 'throttle:api'])->group(fun
     Route::put('/projects/{project}/suites/{suite}', [ScenarioController::class, 'saveSuite']);
     Route::get('/projects/{project}/scenarios', [ScenarioController::class, 'index']);
     Route::post('/projects/{project}/scenarios', [ScenarioController::class, 'store']);
-    Route::get('/projects/{project}/scenarios/{scenario}', [ScenarioController::class, 'show']);
+    Route::get('/projects/{project}/scenarios/{scenario}', [ScenarioController::class, 'show'])->whereNumber('scenario');
     Route::put('/projects/{project}/scenarios/{scenario}', [ScenarioController::class, 'update']);
     Route::get('/projects/{project}/scenarios/{scenario}/revisions', [ScenarioController::class, 'revisions']);
     Route::get('/projects/{project}/scenario-templates', [ScenarioController::class, 'templates']);
+    Route::get('/projects/{project}/scenarios/import/kit', [ScenarioImportController::class, 'kit']);
+    Route::post('/projects/{project}/scenarios/import/preview', [ScenarioImportController::class, 'preview'])->middleware('throttle:imports');
+    Route::post('/projects/{project}/scenarios/import', [ScenarioImportController::class, 'store'])->middleware('throttle:imports');
+    Route::get('/projects/{project}/search', SearchController::class)->middleware('throttle:search');
     Route::get('/projects/{project}/scenario-options', [ScenarioController::class, 'options']);
     Route::get('/projects/{project}/runs', [RunController::class, 'index']);
     Route::post('/projects/{project}/runs', [RunController::class, 'store']);

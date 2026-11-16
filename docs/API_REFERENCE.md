@@ -76,3 +76,17 @@ All authenticated routes pass `account.usable`: inactive accounts get `403 {code
 | POST | `/api/admin/users/{id}/temporary-password` | `{password_mode, temporary_password?}` |
 | PUT/DELETE | `/api/admin/users/{id}/memberships[/{project}]` | `{project_id, role}` |
 | GET | `/api/admin/projects`, `/api/admin/invitations` | Selection list; invitations with `state, search` |
+
+## Scenario import, solo runs, search (migration 2026_11_16_000001)
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/api/projects/{p}/scenarios/import/kit` | Writers (owner/manager/tester): `{template, prompt, limits}`. The template, the AI prompt and the validator share one contract (`schema_version: 1`) |
+| POST | `/api/projects/{p}/scenarios/import/preview` | `{document, suite_id?, suite_name?}` — read-only. Returns `summary {total,new,duplicate,invalid,steps}`, per-scenario `status` (`new`, `duplicate`, `duplicate_in_file`, `invalid`) and located Arabic errors ("السيناريو 3، الخطوة 2: …"). Limits: 1 MB, 100 scenarios, 2000 steps. Throttle `imports` (20/min) |
+| POST | `/api/projects/{p}/scenarios/import` | `{document, idempotency_key (uuid), duplicates: skip|create, expected: {new, duplicate}, acknowledge_changes?, suite_id?}`. Re-validates inside a transaction under a project row lock; creates **drafts** through `ScenarioService::save`; `409 {code: import_changed, preview}` when the project changed since the preview; same key + same payload replays the stored result (`replayed: true`), same key + different payload is `409`. Audited as `scenarios.imported` |
+| GET | `/api/projects/{p}/search?q=` | Scenarios, issues and runs of that project only (title or `TC-12` / `#7`); any member incl. viewers; outsiders get 404. Throttle `search` |
+| GET | `/api/projects/{p}/scenarios?search&status&priority&suite_id&page` | Filters validated; status/priority use the shared enums |
+| GET | `/api/projects?search&status` | Each project also carries `stats` (open issues/critical/sessions, ready scenarios, last run build + environment) |
+| GET | `/api/projects/{p}/scenario-options` | Adds `steps_count`, `solo_eligible`, `solo_reason` |
+| POST | `/api/projects/{p}/runs` | New `mode: collaborative|solo` (default collaborative). Solo needs only `tester_a_id`, and every selected scenario must pass `ScenarioRules::soloIneligibility` (no step for tester B, no shared checkpoint/wait step), otherwise `422` telling the user to use a collaborative session |
+| GET | `/api/projects/{p}/analytics` | Readiness now lists its `environments` and `runs`; `period` echoed |

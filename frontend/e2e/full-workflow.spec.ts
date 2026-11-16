@@ -14,7 +14,7 @@ async function login(page: Page, email: string) {
   await page.getByLabel("البريد الإلكتروني", { exact: true }).fill(email);
   await page.getByLabel("كلمة المرور", { exact: true }).fill(PASSWORD);
   await page.getByRole("button", { name: "تسجيل الدخول", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "نظرة واضحة على الجودة" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "الرئيسية" })).toBeVisible();
 }
 
 async function record(column: Locator, step: number, status: "passed" | "failed", text: string) {
@@ -63,7 +63,7 @@ test("complete collaborative QA lifecycle ends in a verified report", async ({ p
   await page.getByRole("button", { name: "إنشاء مجموعة" }).click();
   await page.getByLabel("اسم المجموعة", { exact: true }).fill("الدعوات");
   await page.getByRole("button", { name: "حفظ المجموعة" }).click();
-  await page.getByRole("link", { name: "سيناريو جديد" }).click();
+  await page.getByRole("link", { name: "إنشاء سيناريو" }).click();
   await page.getByRole("combobox", { name: "ابدأ من قالب" }).selectOption("collaboration");
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "استخدام القالب" }).click();
@@ -89,6 +89,8 @@ test("complete collaborative QA lifecycle ends in a verified report", async ({ p
   await page.getByRole("button", { name: "بدء الجلسة", exact: true }).click();
   await expect(page).toHaveURL(/\/runs\/\d+$/);
   const runUrl = new URL(page.url()).pathname;
+  const ledgerUrl = `${runUrl}?view=all`;
+  await page.goto(ledgerUrl);
 
   // 4. Tester A passes steps 1–2; Tester B records a failure on step 3 in a separate session.
   const colA = page.getByRole("region", { name: "خطوات Tester A", exact: true });
@@ -98,7 +100,7 @@ test("complete collaborative QA lifecycle ends in a verified report", async ({ p
   const tester = await second.newPage();
   tester.on("pageerror", (e) => errors.push(e.message));
   await login(tester, "tester@e2e.test");
-  await tester.goto(runUrl);
+  await tester.goto(ledgerUrl);
   const colB = tester.getByRole("region", { name: "خطوات Tester B", exact: true });
   const failed = await record(colB, 3, "failed", "رسالة خطأ 500 عند قبول الدعوة");
 
@@ -152,7 +154,7 @@ test("complete collaborative QA lifecycle ends in a verified report", async ({ p
   await expect(page.locator(".issue-badges").getByText("مغلقة")).toBeVisible();
 
   // 8. The original run keeps its failure; the owner records the explicit final assessment.
-  await page.goto(runUrl);
+  await page.goto(ledgerUrl);
   await expect(page.getByRole("link", { name: /مشكلة مرتبطة · مغلقة/ })).toBeVisible();
   await page.getByRole("combobox", { name: "التقييم النهائي" }).selectOption("failed");
   await page.getByLabel("خلاصة التحقق").fill("فشل قبول الدعوة على v2.0.0 وأُصلح وتحقق منه بإعادة اختبار مستقلة على v2.0.1.");

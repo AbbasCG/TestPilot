@@ -58,6 +58,7 @@ class AnalyticsService
 
         return [
             'generated_at' => now()->toIso8601String(),
+            'period' => ['days' => $days, 'from' => now()->subDays($days - 1)->toDateString(), 'to' => now()->toDateString()],
             'project' => ['id' => $id, 'name' => $project->name, 'status' => $project->status],
             'results' => $results,
             'runs' => [
@@ -195,7 +196,10 @@ class AnalyticsService
         $blocking = $failed->intersect(['runs_exist', 'no_failed_runs', 'no_critical_issues'])->isNotEmpty();
         $status = $failed->isEmpty() ? 'ready' : ($blocking ? 'not_ready' : 'at_risk');
 
-        return ['build' => $build, 'status' => $status, 'results' => $results, 'checks' => $checks];
+        $environments = DB::table('test_runs')->where('project_id', $projectId)->where('build_version', $build)->pluck('environment_snapshot')
+            ->map(fn ($snapshot) => json_decode($snapshot, true)['name'] ?? null)->filter()->unique()->values();
+
+        return ['build' => $build, 'status' => $status, 'results' => $results, 'checks' => $checks, 'environments' => $environments, 'runs' => (int) (clone $runs)->count()];
     }
 
     /**

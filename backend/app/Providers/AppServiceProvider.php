@@ -42,6 +42,8 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('admin-actions', fn (Request $request) => Limit::perMinute(max(1, (int) config('testpilot.admin_actions_per_minute', 30)) * 4)->by('admin|'.$request->user()?->id));
         Gate::define('manageUsers', fn (User $user) => $user->isActive() && $user->isPlatformAdmin());
         ResetPassword::createUrlUsing(fn (User $user, string $token) => config('testpilot.frontend_url').'/reset-password?token='.urlencode($token).'&email='.urlencode($user->email));
+        RateLimiter::for('imports', fn (Request $request) => Limit::perMinute(20)->by('imports|'.($request->user()?->id ?: $request->ip())));
+        RateLimiter::for('search', fn (Request $request) => Limit::perMinute(120)->by('search|'.($request->user()?->id ?: $request->ip())));
         RateLimiter::for('evidence', fn (Request $request) => Limit::perMinute(max(1, (int) config('auth.evidence_uploads_per_minute', 20)))->by($request->user()?->id ?: $request->ip()));
         RateLimiter::for('api', fn (Request $request) => Limit::perMinute(max(1, (int) config('auth.api_requests_per_minute', 120)))->by($request->user()?->id ?: $request->ip()));
     }

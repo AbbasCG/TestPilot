@@ -58,6 +58,43 @@ class ProjectService
         ];
     }
 
+    /**
+     * Activity counters for the project list and overview, in grouped queries.
+     *
+     * @param  list<int>  $ids
+     * @return array<int, array<string, mixed>>
+     */
+    public function stats(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+        $count = fn (string $table, array $where = [], ?array $in = null, string $column = 'status') => DB::table($table)->whereIn('project_id', $ids)
+            ->when($in, fn ($q) => $q->whereIn($column, $in))->where($where)->selectRaw('project_id, count(*) as total')->groupBy('project_id')->pluck('total', 'project_id');
+        $openIssues = $count('issues', in: IssueWorkflow::OPEN);
+        $criticalIssues = DB::table('issues')->whereIn('project_id', $ids)->whereIn('status', IssueWorkflow::OPEN)->whereIn('severity', ['blocker', 'critical'])->selectRaw('project_id, count(*) as total')->groupBy('project_id')->pluck('total', 'project_id');
+        $openRuns = $count('test_runs', in: ['active', 'paused']);
+        $runsTotal = $count('test_runs');
+        $ready = $count('test_cases', in: ['ready']);
+        $scenarios = $count('test_cases');
+        $environments = $count('environments', ['archived' => false]);
+        $last = [];
+        foreach (DB::table('test_runs')->whereIn('project_id', $ids)->orderByDesc('id')->get(['id', 'project_id', 'title', 'build_version', 'status', 'outcome', 'environment_snapshot', 'created_at']) as $run) {
+            $last[$run->project_id] ??= ['id' => $run->id, 'title' => $run->title, 'build_version' => $run->build_version, 'status' => $run->status, 'outcome' => $run->outcome, 'environment' => json_decode($run->environment_snapshot, true)['name'] ?? null, 'created_at' => $run->created_at];
+        }
+        $stats = [];
+        foreach ($ids as $id) {
+            $stats[$id] = [
+                'open_issues' => (int) ($openIssues[$id] ?? 0), 'critical_open' => (int) ($criticalIssues[$id] ?? 0),
+                'open_runs' => (int) ($openRuns[$id] ?? 0), 'runs_total' => (int) ($runsTotal[$id] ?? 0),
+                'scenarios_ready' => (int) ($ready[$id] ?? 0), 'scenarios_total' => (int) ($scenarios[$id] ?? 0),
+                'environments_active' => (int) ($environments[$id] ?? 0), 'last_run' => $last[$id] ?? null,
+            ];
+        }
+
+        return $stats;
+    }
+
     public function audit(Project $project, User $actor, string $action, array $metadata = []): void
     {
         DB::table('activity_logs')->insert([

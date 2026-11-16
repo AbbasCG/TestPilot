@@ -15,12 +15,12 @@ import {
   Plus,
   Save,
   Trash2,
-  ListChecks,
-  BookOpen,
 } from "lucide-react";
 import { api } from "../api";
-import type { Page, Project } from "../api";
+import type { Project } from "../api";
 import { Busy, Notice, useRefreshTesting } from "./shared";
+import { Library } from "./Library";
+import { Disclosure } from "./Disclosure";
 import {
   emptyScenario,
   newStep,
@@ -36,7 +36,7 @@ const canDesign = (p: Project) =>
 export function TestManagement({ project }: { project: Project }) {
   return (
     <Routes>
-      <Route index element={<Library project={project} />} />
+      <Route index element={<LibraryRoute project={project} />} />
       <Route path="new" element={<BuilderLoader project={project} />} />
       <Route
         path=":scenarioId/edit"
@@ -55,156 +55,15 @@ function useSuites(project: number) {
     queryFn: () => api<{ data: Suite[] }>(`/api/projects/${project}/suites`),
   });
 }
-function Library({ project: p }: { project: Project }) {
+function LibraryRoute({ project: p }: { project: Project }) {
   const suites = useSuites(p.id);
-  const [suiteId, setSuiteId] = useState("");
-  const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<Suite | null | undefined>(undefined);
-  const cases = useQuery({
-    queryKey: ["testing", p.id, "scenarios", suiteId, page],
-    queryFn: () =>
-      api<Page<Scenario>>(
-        `/api/projects/${p.id}/scenarios?page=${page}${suiteId ? `&suite_id=${suiteId}` : ""}`,
-      ),
-  });
   return (
     <>
-      <div className="section-heading">
-        <div>
-          <h2>مكتبة الاختبارات</h2>
-          <p className="muted">
-            مجموعات منظمة وسيناريوهات قابلة للتنفيذ، مع تاريخ محفوظ لكل نسخة.
-          </p>
-        </div>
-        {canDesign(p) && (
-          <Link className="primary button" to="new">
-            <Plus size={18} /> سيناريو جديد
-          </Link>
-        )}
-      </div>
-      <Notice error={suites.error || cases.error} />
-      <div className="library-grid">
-        <aside className="panel padded suite-list">
-          <div className="section-heading">
-            <h3>المجموعات</h3>
-            {canDesign(p) && (
-              <button
-                aria-label="إنشاء مجموعة"
-                onClick={() => setEditing(null)}
-              >
-                <Plus size={16} />
-              </button>
-            )}
-          </div>
-          <button
-            className={!suiteId ? "selected" : ""}
-            onClick={() => {
-              setSuiteId("");
-              setPage(1);
-            }}
-          >
-            كل السيناريوهات
-          </button>
-          {suites.data?.data.map((s) => (
-            <div key={s.id} className="suite-row">
-              <button
-                className={suiteId === String(s.id) ? "selected" : ""}
-                onClick={() => {
-                  setSuiteId(String(s.id));
-                  setPage(1);
-                }}
-              >
-                <BookOpen size={17} />
-                <span>
-                  {s.name}
-                  <small>
-                    {s.cases_count} سيناريو · {s.ready_count} جاهز{" "}
-                    {s.archived ? "· مؤرشفة" : ""}
-                  </small>
-                </span>
-              </button>
-              {canDesign(p) && (
-                <button
-                  className="text-button"
-                  aria-label={`تعديل مجموعة ${s.name}`}
-                  onClick={() => setEditing(s)}
-                >
-                  تعديل
-                </button>
-              )}
-            </div>
-          ))}
-          {suites.isPending && <Busy />}
-          {suites.data?.data.length === 0 && (
-            <p className="hint">أنشئ مجموعة لتنظيم السيناريوهات.</p>
-          )}
-        </aside>
-        <section className="panel">
-          {cases.isPending ? (
-            <Busy />
-          ) : cases.data?.data.length ? (
-            <>
-              <div className="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>السيناريو</th>
-                      <th>الحالة</th>
-                      <th>الأولوية</th>
-                      <th>النسخة</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {cases.data.data.map((c) => (
-                      <tr key={c.id}>
-                        <td>
-                          <Link className="scenario-title" to={String(c.id)}>
-                            <ListChecks size={20} />
-                            <span>
-                              {c.title}
-                              {c.is_template && (
-                                <small>قالب قابل لإعادة الاستخدام</small>
-                              )}
-                            </span>
-                          </Link>
-                        </td>
-                        <td>{statuses[c.status]}</td>
-                        <td>{priorities[c.priority]}</td>
-                        <td dir="ltr">v{c.version}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="pagination">
-                <span>{cases.data.meta.total} سيناريو</span>
-                <button disabled={page === 1} onClick={() => setPage(page - 1)}>
-                  السابق
-                </button>
-                <button
-                  disabled={page >= cases.data.meta.last_page}
-                  onClick={() => setPage(page + 1)}
-                >
-                  التالي
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="empty">
-              <ListChecks size={34} />
-              <h3>حوّل خطوات العمل إلى اختبار واضح</h3>
-              <p>ابدأ من قالب جاهز أو أنشئ السيناريو بنفسك.</p>
-            </div>
-          )}
-        </section>
-      </div>
+      <Notice error={suites.error} />
+      <Library project={p} suites={suites.data?.data} onEditSuite={setEditing} />
       {editing !== undefined && (
-        <SuiteEditor
-          key={editing?.id ?? "new"}
-          project={p}
-          suite={editing}
-          close={() => setEditing(undefined)}
-        />
+        <SuiteEditor key={editing?.id ?? "new"} project={p} suite={editing} close={() => setEditing(undefined)} />
       )}
     </>
   );
@@ -519,27 +378,6 @@ function ScenarioEditor({
             </select>
           </label>
           <label>
-            بيئة الاختبار
-            <select
-              value={content.environment_id || ""}
-              onChange={(e) =>
-                field(
-                  "environment_id",
-                  e.target.value ? Number(e.target.value) : null,
-                )
-              }
-            >
-              <option value="">تُحدد عند التشغيل</option>
-              {p.environments
-                ?.filter((e) => !e.archived)
-                .map((e) => (
-                  <option key={e.id} value={e.id}>
-                    {e.name}
-                  </option>
-                ))}
-            </select>
-          </label>
-          <label>
             الأولوية
             <select
               value={content.priority}
@@ -578,6 +416,44 @@ function ScenarioEditor({
               ))}
             </select>
           </label>
+        </div>
+        <div className="field-grid">
+          {Object.entries(contentLabels).filter(([key]) => ["objective", "prerequisites", "acceptance_criteria"].includes(key)).map(([key, label]) => (
+            <label key={key}>
+              {label}
+              <textarea aria-label={label}
+                required={["objective", "acceptance_criteria"].includes(key)}
+                maxLength={10000}
+                rows={2}
+                value={(content[key as keyof ScenarioContent] as string) || ""}
+                onChange={(e) => field(key as "description", e.target.value)}
+              />
+            </label>
+          ))}
+        </div>
+        <Disclosure title="إعدادات متقدمة" hint="البيئة، القالب، الوصف، البيانات التجريبية، الاعتماديات">
+          <div className="field-grid">
+          <label>
+            بيئة الاختبار
+            <select
+              value={content.environment_id || ""}
+              onChange={(e) =>
+                field(
+                  "environment_id",
+                  e.target.value ? Number(e.target.value) : null,
+                )
+              }
+            >
+              <option value="">تُحدد عند التشغيل</option>
+              {p.environments
+                ?.filter((e) => !e.archived)
+                .map((e) => (
+                  <option key={e.id} value={e.id}>
+                    {e.name}
+                  </option>
+                ))}
+            </select>
+          </label>
           <label className="check-label">
             <input
               type="checkbox"
@@ -586,9 +462,9 @@ function ScenarioEditor({
             />{" "}
             حفظه كقالب للمشروع
           </label>
-        </div>
+          </div>
         <div className="field-grid">
-          {Object.entries(contentLabels).map(([key, label]) => (
+          {Object.entries(contentLabels).filter(([key]) => !["objective", "prerequisites", "acceptance_criteria"].includes(key)).map(([key, label]) => (
             <label key={key}>
               {label}
               <textarea aria-label={label}
@@ -626,6 +502,7 @@ function ScenarioEditor({
             <p className="hint">لا توجد سيناريوهات أخرى بعد.</p>
           )}
         </fieldset>
+        </Disclosure>
       </section>
       <div className="section-heading steps-heading">
         <h2>

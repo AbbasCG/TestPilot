@@ -6,7 +6,7 @@ async function login(page: Page, email: string) {
   await page.getByLabel('البريد الإلكتروني', { exact: true }).fill(email)
   await page.getByLabel('كلمة المرور', { exact: true }).fill('TestPilot-e2e-only-2026')
   await page.getByRole('button', { name: 'تسجيل الدخول', exact: true }).click()
-  await expect(page.getByRole('heading', { name: 'نظرة واضحة على الجودة' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'الرئيسية' })).toBeVisible()
 }
 async function call(page: Page, path: string, method = 'GET', body?: unknown) {
   const csrf = (await page.context().cookies()).find(c => c.name === 'XSRF-TOKEN')!.value
@@ -41,7 +41,8 @@ test('two independent testers synchronize checkpoints and explicitly assess a fr
   await page.getByRole('checkbox', { name: /دعوة وقبول وتحقق/ }).check()
   await page.getByRole('button', { name: 'بدء الجلسة', exact: true }).click()
   await expect(page).toHaveURL(/\/runs\/\d+$/)
-  const runUrl = page.url()
+  const runUrl = `${page.url()}?view=all`
+  await page.goto(runUrl)
   const second = await browser.newContext(); const tester = await second.newPage(); tester.on('pageerror', e => errors.push(e.message))
   await login(tester, 'tester@e2e.test'); await tester.goto(runUrl)
   const colA = page.getByRole('region', { name: 'خطوات Tester A', exact: true })
