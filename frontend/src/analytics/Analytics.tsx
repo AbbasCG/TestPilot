@@ -5,7 +5,7 @@ import { AlertTriangle, Bug, CheckCircle2, Download, FileJson, FileText, Gauge, 
 import { api } from "../api";
 import type { Project } from "../api";
 import { Busy, Notice } from "../testing/shared";
-import { resultLabels } from "../testing/RunManagement";
+import { resultLabels } from "../testing/types";
 import type { AnalyticsReport, ComparisonRow, TrendPoint } from "./types";
 import { readinessLabels, roleLabels } from "./types";
 

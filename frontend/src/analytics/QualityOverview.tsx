@@ -4,7 +4,7 @@ import { Activity, Bug, ChevronLeft, ClipboardCheck, FolderKanban, RefreshCw } f
 import { Link } from "react-router-dom";
 import { api } from "../api";
 import { issueStatuses, severities } from "../issues/types";
-import { resultLabels } from "../testing/RunManagement";
+import { resultLabels } from "../testing/types";
 import { Busy, Notice } from "../testing/shared";
 import "./quality-overview.css";
 
