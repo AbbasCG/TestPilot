@@ -168,6 +168,7 @@ test("complete collaborative QA lifecycle ends in a verified report", async ({ p
   await expect(page.getByRole("region", { name: /جاهزية الإصدار/ })).toContainText("غير جاهز");
   await expect(page.getByRole("img", { name: /نتائج مسجلة يوميًا: 3 نتيجة/ })).toBeVisible();
   const download = page.waitForEvent("download");
+  await page.getByText("تصدير التقرير", { exact: true }).click();
   await page.getByRole("link", { name: "Markdown" }).click();
   const markdown = await readFile((await (await download).path())!, "utf8");
   expect(markdown).toContain(`# تقرير جودة: ${name}`);
