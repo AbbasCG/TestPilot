@@ -6,7 +6,7 @@ import { api } from "../api";
 import type { Project, User } from "../api";
 import { Notice } from "../testing/shared";
 import { OneTimeSecret } from "./OneTimeSecret";
-import { InvitationRows, StateBadge } from "./UsersAdmin";
+import { InvitationRows, StateBadge } from "./InvitationRows";
 import type { Delivery, InvitationView } from "./types";
 import { inviteUrl, invitationLabels, projectRoleLabels } from "./types";
 
