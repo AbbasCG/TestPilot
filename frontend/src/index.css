@@ -590,8 +590,9 @@ td {
 .login-story .brand {
   justify-content: flex-end;
 }
+.login-form input:focus-visible, .login-form .primary:focus-visible, .login-form a:focus-visible { outline: 3px solid #74a3ff; outline-offset: 2px; }
 .login-story h1 {
-  font-size: 49px;
+  font-size: clamp(32px, 4vw, 49px);
   line-height: 1.55;
   margin: 22px 0;
 }

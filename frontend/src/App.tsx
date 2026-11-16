@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import {
   BrowserRouter,
   Navigate,
@@ -47,17 +47,25 @@ import {
 } from "lucide-react";
 import { api, ApiError } from "./api";
 import type { Page, Project, User } from "./api";
-import { TestManagement } from "./testing/TestManagement";
-import { ProjectMaintenance } from "./testing/ProjectMaintenance";
-import { RunManagement } from "./testing/RunManagement";
-import { IssueManagement } from "./issues/IssueManagement";
-import { AnalyticsSection, ProjectComparison } from "./analytics/Analytics";
+
+
+
+
+
 import { QualityOverview } from "./analytics/QualityOverview";
 import { AcceptInvitation, ChangePasswordForm, ForcedPasswordChange, ForgotPassword, InactiveAccount, ResetPassword } from "./users/AccountScreens";
 import { TeamMembers } from "./users/TeamMembers";
-import { UsersAdmin } from "./users/UsersAdmin";
+
 import { CommandPalette, usePaletteShortcut } from "./CommandPalette";
 import "./shell.css";
+
+const TestManagement = lazy(() => import("./testing/TestManagement").then((m) => ({ default: m.TestManagement })));
+const ProjectMaintenance = lazy(() => import("./testing/ProjectMaintenance").then((m) => ({ default: m.ProjectMaintenance })));
+const RunManagement = lazy(() => import("./testing/RunManagement").then((m) => ({ default: m.RunManagement })));
+const IssueManagement = lazy(() => import("./issues/IssueManagement").then((m) => ({ default: m.IssueManagement })));
+const AnalyticsSection = lazy(() => import("./analytics/Analytics").then((m) => ({ default: m.AnalyticsSection })));
+const ProjectComparison = lazy(() => import("./analytics/Analytics").then((m) => ({ default: m.ProjectComparison })));
+const UsersAdmin = lazy(() => import("./users/UsersAdmin").then((m) => ({ default: m.UsersAdmin })));
 
 // Server-side account gates: an inactive account leaves the app; a pending
 // temporary-password change re-reads the profile so the change screen appears.
@@ -325,6 +333,7 @@ function Shell() {
           </div>
         </header>
         <main className="content">
+          <Suspense fallback={<Loading />}>
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/projects" element={<Projects />} />
@@ -346,6 +355,7 @@ function Shell() {
               }
             />
           </Routes>
+          </Suspense>
         </main>
       </div>
       <nav className="mobile-nav" aria-label="التنقل السريع">
@@ -672,9 +682,11 @@ function ProjectDetail() {
         <Link className="back" to={`/projects/${p.id}/runs`}>
           <ArrowRight size={16} /> جلسات {p.name}
         </Link>
-        <Routes>
-          <Route path="runs/*" element={<RunManagement project={p} />} />
-        </Routes>
+        <Suspense fallback={<Loading />}>
+          <Routes>
+            <Route path="runs/*" element={<RunManagement project={p} />} />
+          </Routes>
+        </Suspense>
       </>
     );
   return (
@@ -714,6 +726,7 @@ function ProjectDetail() {
         </NavLink>
         <NavLink to={`/projects/${id}/edit`}>إعدادات المشروع</NavLink>
       </nav>
+      <Suspense fallback={<Loading />}>
       <Routes>
         <Route path="runs/*" element={<RunManagement project={p} />} />
         <Route path="tests/*" element={<TestManagement project={p} />} />
@@ -733,6 +746,7 @@ function ProjectDetail() {
           }
         />
       </Routes>
+      </Suspense>
     </>
   );
 }

@@ -11,12 +11,12 @@ import { EvidenceGallery, EvidenceUpload } from '../issues/Evidence'
 import type { EvidenceFile } from '../issues/types'
 import { issueStatuses } from '../issues/types'
 import { GuidedRunner } from './GuidedRunner'
+import { resultLabels } from './types'
 
 export type Result = { id: number; test_run_id: number; run_case_id: number; participant_id: number; step_key: string; status: string; actual_result: string | null; notes: string | null; verified: boolean; version: number }
 export type Participant = { id: number; user_id: number; role: string; name: string }
 export type RunCase = { id: number; test_case_id: number; snapshot: ScenarioContent & { version: number } }
 export type Run = { id: number; mode?: 'solo' | 'collaborative'; title: string; status: string; build_version: string; version: number; created_by: number; outcome: string | null; summary: string | null; participants: Participant[]; cases: RunCase[]; results: Result[]; environment_snapshot: { name: string; url: string | null }; progress: { done: number; passed: number; total: number }; issues: { id: number; number: number; status: string; severity: string; step_result_id: number }[]; evidence: EvidenceFile[] }
-export const resultLabels: Record<string, string> = { pending: 'لم تُنفّذ', passed: 'ناجحة', failed: 'فاشلة', blocked: 'متعذرة', active: 'قيد التنفيذ', paused: 'متوقفة مؤقتًا', completed: 'منتهية', inconclusive: 'غير حاسمة' }
 type Option = { id: number; title: string; version: number; status: string; suite_id: number; steps_count?: number; solo_eligible?: boolean; solo_reason?: string | null }
 export function RunManagement({ project }: { project: Project }) { return <Routes><Route index element={<RunList project={project} />} /><Route path="new" element={<RunCreator project={project} />} /><Route path=":runId" element={<Runner project={project} />} /></Routes> }
 function RunList({ project: p }: { project: Project }) {

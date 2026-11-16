@@ -122,3 +122,4 @@ export const emptyScenario = (): ScenarioContent => ({
   is_template: false,
   steps: [newStep()],
 });
+export const resultLabels: Record<string, string> = { pending: 'لم تُنفّذ', passed: 'ناجحة', failed: 'فاشلة', blocked: 'متعذرة', active: 'قيد التنفيذ', paused: 'متوقفة مؤقتًا', completed: 'منتهية', inconclusive: 'غير حاسمة' }

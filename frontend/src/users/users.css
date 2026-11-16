@@ -16,8 +16,14 @@
   gap: 14px;
   box-shadow: 0 18px 50px rgb(25 51 74 / 0.08);
 }
-.auth-card .brand { justify-content: flex-start; color: #235cc7; font-size: 22px; }
-.auth-card h1 { font-size: 26px; }
+.auth-card .brand { justify-content: flex-start; color: #235cc7; font-size: 22px; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0; }
+.auth-card h1 { font-size: 24px; line-height: 1.5; }
+.auth-card input:focus-visible, .auth-card .primary:focus-visible, .auth-card a:focus-visible { outline: 3px solid #74a3ff; outline-offset: 2px; }
+.auth-card .primary { width: 100%; justify-content: center; }
+.auth-card .button, .auth-card .text-link { justify-self: start; }
+.auth-card .field-error { color: #912018; font-size: 13px; }
+.auth-notice { border: 1px solid #e0b64a; }
+.auth-result { border: 1px solid #3a9a8c; }
 .auth-card form { display: grid; gap: 4px; }
 .auth-card label { margin: 10px 0 4px; }
 .auth-card form button { margin-top: 14px; }
@@ -67,14 +73,16 @@
   color: var(--muted);
 }
 .account-state::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-.state-active, .invite-accepted { color: #147d70; background: var(--tint-teal, #e1f1ee); }
-.state-must_change_password, .invite-pending { color: #8e630d; background: var(--tint-amber, #fff0ce); }
-.state-suspended, .state-disabled, .invite-revoked { color: #a62b3b; background: var(--tint-red, #fae4e8); }
+.state-active, .invite-accepted { color: var(--success-text); background: color-mix(in srgb, var(--success) 12%, var(--surface)); }
+.state-must_change_password, .invite-pending { color: var(--warning-text); background: color-mix(in srgb, var(--warning) 14%, var(--surface)); }
+.state-suspended, .state-disabled, .invite-revoked { color: var(--danger-text); background: color-mix(in srgb, var(--danger) 12%, var(--surface)); }
 .invite-expired { color: var(--muted); }
 
 .users-stats { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .stat-button { text-align: start; cursor: pointer; font: inherit; color: inherit; }
-.stat-button[aria-pressed="true"] { border-color: #235cc7; box-shadow: inset 0 0 0 1px #235cc7; }
+.stat-button[aria-pressed="true"] { border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary); }
+.stat-button:hover { border-color: var(--primary); }
+.stat-button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .users-filters {
   display: grid;
   grid-template-columns: minmax(220px, 2fr) repeat(3, minmax(130px, 1fr)) auto;
@@ -91,7 +99,8 @@
 .row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .row-actions button { font-size: 12px; padding: 4px 10px; min-height: 32px; }
 .plain-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 13px; }
-button.danger { border-color: #bc3545; color: #bc3545; }
+button.danger { border-color: var(--danger); color: var(--danger-text); }
+button.danger:hover { background: color-mix(in srgb, var(--danger) 10%, transparent); }
 
 .wizard-progress { list-style: none; margin: 0 0 18px; padding: 0; display: flex; gap: 8px; flex-wrap: wrap; counter-reset: wz; }
 .wizard-progress li {
@@ -115,9 +124,11 @@ button.danger { border-color: #bc3545; color: #bc3545; }
   font-size: 11px;
   border: 1px solid var(--line);
 }
-.wizard-progress li.current { color: inherit; border-color: #235cc7; font-weight: 500; }
-.wizard-progress li.current::before { background: #235cc7; border-color: #235cc7; color: #fff; }
-.wizard-progress li.done::before { content: "✓"; background: #147d70; border-color: #147d70; color: #fff; }
+.wizard-progress li.current { color: inherit; border-color: var(--primary); font-weight: 500; }
+.wizard-progress li.current::before { background: var(--primary); border-color: var(--primary); color: #fff; }
+.app[data-theme="dark"] .wizard-progress li.current::before { color: #0b1a2e; }
+.wizard-progress li.done::before { content: "✓"; background: var(--success); border-color: var(--success); color: #fff; }
+.app[data-theme="dark"] .wizard-progress li.done::before { color: #0b1a2e; }
 .wizard-panel { max-width: 860px; }
 .method-options { border: 0; padding: 0; margin: 0 0 12px; display: grid; gap: 10px; }
 .method-options legend { font-weight: 500; margin-bottom: 8px; }
@@ -134,7 +145,8 @@ button.danger { border-color: #bc3545; color: #bc3545; }
 }
 .method-card input { width: auto; min-height: 0; margin-top: 5px; }
 .method-card small { display: block; font-weight: 400; color: var(--muted); margin-top: 2px; }
-.method-card.selected { border-color: #235cc7; background: var(--tint-blue, #e4edfc); }
+.method-card.selected { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 9%, var(--surface)); }
+.method-card:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
 .existing-account, .resolution { border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin-top: 14px; display: grid; gap: 10px; }
 .resolution p { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .member-flow { margin-top: 26px; display: grid; gap: 8px; }
@@ -146,18 +158,15 @@ button.danger { border-color: #bc3545; color: #bc3545; }
 .app[data-theme="dark"] .one-time-secret { background: #3a3016; border-color: #8e6a1c; }
 .app[data-theme="dark"] .one-time-secret p { color: #f2cd73; }
 .app[data-theme="dark"] .secret-value code { background: #192b3d; border-color: #8e6a1c; color: #f6f8fb; }
-.app[data-theme="dark"] .state-active, .app[data-theme="dark"] .invite-accepted { color: #7fd8c9; }
-.app[data-theme="dark"] .state-must_change_password, .app[data-theme="dark"] .invite-pending { color: #f2cd73; }
-.app[data-theme="dark"] .state-suspended, .app[data-theme="dark"] .state-disabled, .app[data-theme="dark"] .invite-revoked { color: #ff9aa6; }
-.app[data-theme="dark"] .method-card.selected { border-color: #9fc0ff; }
-.app[data-theme="dark"] button.danger { border-color: #ff9aa6; color: #ff9aa6; }
 
 @media (prefers-color-scheme: dark) {
   .auth-page { background: #101e2c; color: #e7edf4; }
   .auth-card { background: #192b3d; border-color: #35495b; box-shadow: none; }
   .auth-card input { background: #101e2c; border-color: #35495b; color: inherit; }
   .invite-facts dt, .text-link-button { color: #b0c0d1; }
-  .auth-notice { background: #3a3016; color: #f2cd73; }
+  .auth-card .brand { color: #9fc0ff; border-bottom-color: #35495b; }
+  .auth-card .field-error { color: #ffb4ab; }
+  .auth-notice { background: #3a3016; color: #f2cd73; border-color: #8a6d1f; }
   .auth-result { background: #17413c; color: #7fd8c9; }
 }
 

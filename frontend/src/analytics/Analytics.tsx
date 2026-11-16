@@ -5,7 +5,7 @@ import { AlertTriangle, Bug, CheckCircle2, Download, FileJson, FileText, Gauge, 
 import { api } from "../api";
 import type { Project } from "../api";
 import { Busy, Notice } from "../testing/shared";
-import { resultLabels } from "../testing/RunManagement";
+import { resultLabels } from "../testing/types";
 import type { AnalyticsReport, ComparisonRow, TrendPoint } from "./types";
 import { readinessLabels, roleLabels } from "./types";
 
@@ -72,8 +72,11 @@ function AnalyticsPage({ project: p }: { project: Project }) {
             ))}
           </select>
         </label>
-        <div className="export-links" aria-label="تصدير التقرير">
-          <span className="muted">تصدير:</span>
+        <details className="export-menu">
+          <summary className="button">
+            <Download size={15} aria-hidden="true" /> تصدير التقرير
+          </summary>
+          <div className="export-links" aria-label="تصدير التقرير">
           <a className="button" href={exportUrl("csv")} download>
             <Download size={15} /> CSV ملخص
           </a>
@@ -92,7 +95,8 @@ function AnalyticsPage({ project: p }: { project: Project }) {
           <a className="button" href={exportUrl("md")} download>
             <FileText size={15} /> Markdown
           </a>
-        </div>
+          </div>
+        </details>
       </div>
       <Notice error={query.error} />
       {query.isPending ? <Busy /> : r && <ReportBody report={r} project={p} />}
@@ -102,25 +106,15 @@ function AnalyticsPage({ project: p }: { project: Project }) {
 
 function ReportBody({ report: r, project: p, print }: { report: AnalyticsReport; project: Project; print?: boolean }) {
   const tiles = [
-    { icon: Gauge, label: "نسبة النجاح", value: pct(r.results.pass_rate), hint: `${r.results.passed} من ${r.results.executed} خطوة منفذة` },
-    { icon: XCircle, label: "خطوات فاشلة", value: r.results.failed, hint: `${r.results.pending} غير منفذة` },
-    { icon: AlertTriangle, label: "خطوات متعذرة", value: r.results.blocked, hint: "Blocked" },
+    { tone: "ok", icon: Gauge, label: "نسبة النجاح", value: pct(r.results.pass_rate), hint: `${r.results.passed} من ${r.results.executed} خطوة منفذة` },
+    { tone: "bad", icon: XCircle, label: "خطوات فاشلة", value: r.results.failed, hint: `${r.results.pending} غير منفذة` },
+    { tone: "warn", icon: AlertTriangle, label: "خطوات متعذرة", value: r.results.blocked, hint: "Blocked" },
     { icon: Bug, label: "مشكلات مفتوحة", value: r.issues.open, hint: `${r.issues.total} إجمالًا` },
-    { icon: ShieldAlert, label: "حرجة مفتوحة", value: r.issues.critical_open, hint: "معطِّلة أو حرجة" },
+    { tone: "bad", icon: ShieldAlert, label: "حرجة مفتوحة", value: r.issues.critical_open, hint: "معطِّلة أو حرجة" },
     { icon: RotateCcw, label: "إعادة الاختبار", value: `${r.retests.passed} / ${r.retests.failed}`, hint: `ناجحة / فاشلة · نجاح أول محاولة ${pct(r.retests.first_attempt_pass_rate)}` },
   ];
   return (
     <>
-      <div className="kpi-grid">
-        {tiles.map((t) => (
-          <section className="stat kpi" key={t.label}>
-            <t.icon size={20} aria-hidden="true" />
-            <span>{t.label}</span>
-            <strong>{t.value}</strong>
-            <small>{t.hint}</small>
-          </section>
-        ))}
-      </div>
       <div className="analytics-grid">
         <Readiness report={r} />
         <section className="panel padded">
@@ -128,6 +122,16 @@ function ReportBody({ report: r, project: p, print }: { report: AnalyticsReport;
           <p className="muted chart-sub">كل حفظ لنتيجة خطوة في اليوم، من السجل غير القابل للتعديل.</p>
           <TrendChart points={r.trends} print={print} />
         </section>
+      </div>
+      <div className="kpi-grid">
+        {tiles.map((t) => (
+          <section className={`stat kpi${t.tone ? ` kpi-${t.tone}` : ""}`} key={t.label}>
+            <t.icon size={20} aria-hidden="true" />
+            <span>{t.label}</span>
+            <strong>{t.value}</strong>
+            <small>{t.hint}</small>
+          </section>
+        ))}
       </div>
       <section className="panel">
         <div className="panel-title">
