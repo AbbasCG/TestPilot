@@ -216,7 +216,7 @@ git -C "$DIR" merge --ff-only --quiet "$target" || abort 'fast-forward failed'
 dc config -q > /dev/null 2>&1 || abort 'compose configuration of the target commit is invalid'
 
 log 'backing up database and evidence'
-(cd "$DIR/infra" && COMPOSE_PROJECT_NAME=$PROJECT RELEASE_TAG=$tag ./backup.sh "$BACKUP_DIR") || abort 'backup failed'
+(cd "$DIR/infra" && COMPOSE_PROJECT_NAME=$PROJECT RELEASE_TAG=$tag bash ./backup.sh "$BACKUP_DIR") || abort 'backup failed'
 
 log "building testpilot-api:$tag and testpilot-web:$tag (previous tags are kept)"
 dc build api web || abort 'image build failed'

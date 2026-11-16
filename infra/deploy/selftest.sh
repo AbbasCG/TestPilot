@@ -8,7 +8,14 @@ repo_root=$(cd "$here/../.." && pwd)
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 pass=0
-fail() { printf 'SELFTEST FAIL: %s\n' "$*" >&2; exit 1; }
+fail() {
+  printf 'SELFTEST FAIL: %s\n' "$*" >&2
+  printf -- '--- output of the last simulated run ---\n' >&2
+  cat "$work/out.txt" >&2 2> /dev/null || true
+  printf -- '--- stubbed docker calls ---\n' >&2
+  cat "$STUB_LOG" >&2 2> /dev/null || true
+  exit 1
+}
 check() { local name=$1 expected=$2 actual=$3; [ "$expected" = "$actual" ] && { pass=$((pass + 1)); printf 'ok   %s\n' "$name"; } || fail "$name (expected $expected, got $actual)"; }
 git_() { git -c user.name=selftest -c user.email=selftest@example.invalid "$@"; }
 
