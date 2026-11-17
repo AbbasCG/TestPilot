@@ -6,7 +6,7 @@
   --series-blocked: #b5740a;
   --series-failed: #c4334a;
   --chart-grid: #e6ebf2;
-  --chart-axis: #617389;
+  --chart-axis: #566980;
 }
 .app[data-theme="dark"] {
   --series-passed: #26a08c;

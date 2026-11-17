@@ -43,6 +43,7 @@
 .view-switch { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin-bottom: 16px; }
 .view-switch a { padding: 8px 16px; font-weight: 500; }
 .view-switch a[aria-current="page"] { background: var(--primary, #235cc7); color: #fff; }
+.app[data-theme="dark"] .view-switch a[aria-current="page"] { color: #0b1a2e; }
 @media (max-width: 767px) {
   .guided-choices { grid-template-columns: 1fr; }
   .guided-save { position: sticky; inset-block-end: 0; padding: 10px 0; background: var(--surface); border-top: 1px solid var(--line); margin-inline: -4px; }

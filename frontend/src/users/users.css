@@ -30,9 +30,9 @@
 .auth-notice { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 9px; background: #fff4d6; color: #6d4c06; font-size: 13px; }
 .auth-notice svg { flex: none; margin-top: 3px; }
 .auth-result { padding: 12px 14px; border-radius: 9px; background: #e1f1ee; color: #0f5f55; }
-.text-link-button { border: 0; background: none; color: #617389; justify-self: start; padding: 4px 0; min-height: 0; }
+.text-link-button { border: 0; background: none; color: #566980; justify-self: start; padding: 4px 0; min-height: 0; }
 .invite-facts { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0; font-size: 13px; }
-.invite-facts dt { color: #617389; }
+.invite-facts dt { color: #566980; }
 .invite-facts dd { margin: 0; overflow-wrap: anywhere; }
 
 .one-time-secret {

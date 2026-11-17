@@ -96,7 +96,7 @@ export function Library({ project: p, onEditSuite, suites }: { project: Project;
           </select>
         </label>
         {f.active && <button type="button" onClick={() => { setDraft(""); f.set({ q: "", status: "", priority: "", suite: "" }); }}><X size={15} /> مسح التصفية</button>}
-        {canDesign(p) && <button type="button" className="text-button" aria-label="إنشاء مجموعة" onClick={() => onEditSuite(null)}><BookOpen size={15} /> مجموعة جديدة</button>}
+        {canDesign(p) && <button type="button" className="text-button" onClick={() => onEditSuite(null)}><BookOpen size={15} /> إنشاء مجموعة</button>}
       </div>
       {suites && suites.length > 0 && (
         <ul className="suite-strip" aria-label="المجموعات">

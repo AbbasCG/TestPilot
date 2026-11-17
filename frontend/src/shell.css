@@ -8,6 +8,7 @@
   --danger-text: #912018;
   --warning-text: #93370d;
   --focus: #74a3ff;
+  --link: #2a66c4;
 }
 .app[data-theme="dark"] {
   --primary: #6c9cff;
@@ -17,6 +18,7 @@
   --success-text: #86efac;
   --danger-text: #ffb4ab;
   --warning-text: #fcd34d;
+  --link: #8db3ff;
 }
 .app[data-theme="dark"] .primary { background: var(--primary); border-color: var(--primary); color: #0b1a2e; }
 

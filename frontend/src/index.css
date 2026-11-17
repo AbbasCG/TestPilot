@@ -73,7 +73,7 @@ button:hover:not(:disabled) {
   border-color: #235cc7;
 }
 .muted {
-  color: var(--muted, #617389);
+  color: var(--muted, #566980);
 }
 h1,
 h2,
@@ -139,7 +139,7 @@ form button {
 }
 .hint {
   font-size: 12px;
-  color: var(--muted, #617389);
+  color: var(--muted, #566980);
   margin: 20px 0;
 }
 .brand {
@@ -155,7 +155,7 @@ form button {
   --surface: #fff;
   --canvas: #f3f6fa;
   --line: #e2e8f0;
-  --muted: #617389;
+  --muted: #566980;
   display: flex;
   min-height: 100vh;
   background: var(--canvas);
@@ -204,7 +204,7 @@ form button {
   border: 1px solid var(--line);
   border-radius: 10px;
   font-weight: 700;
-  color: #3473d4;
+  color: var(--link, #2a66c4);
 }
 .sidebar nav {
   display: flex;
@@ -303,7 +303,7 @@ form button {
   gap: 10px;
 }
 .stat svg {
-  color: #3473d4;
+  color: var(--link, #2a66c4);
   grid-column: 2;
   grid-row: 1;
 }
@@ -337,7 +337,7 @@ form button {
   align-items: center;
   gap: 9px;
   font-size: 12px;
-  color: #3473d4;
+  color: var(--link, #2a66c4);
 }
 .table-wrap {
   position: relative;
@@ -380,7 +380,7 @@ td {
   height: 42px;
   width: 42px;
   background: var(--canvas);
-  color: #3473d4;
+  color: var(--link, #2a66c4);
   border-radius: 9px;
   display: grid;
   place-items: center;
@@ -467,8 +467,8 @@ td {
   padding: 8px 0;
 }
 .wizard-steps .selected {
-  color: #3473d4;
-  border-bottom: 2px solid #3473d4;
+  color: var(--link, #2a66c4);
+  border-bottom: 2px solid #2a66c4;
 }
 .review {
   padding: 10px 0 25px;
@@ -499,8 +499,8 @@ td {
   font-size: 13px;
 }
 .tabs a.active {
-  color: #3473d4;
-  border-bottom: 2px solid #3473d4;
+  color: var(--link, #2a66c4);
+  border-bottom: 2px solid #2a66c4;
 }
 .detail-grid {
   display: grid;
@@ -526,7 +526,7 @@ td {
 .environments a {
   display: block;
   font-size: 12px;
-  color: #3473d4;
+  color: var(--link, #2a66c4);
   overflow-wrap: anywhere;
 }
 .activity {
@@ -1051,7 +1051,7 @@ td {
   background: var(--canvas);
 }
 .text-link {
-  color: #3473d4;
+  color: var(--link, #2a66c4);
   display: inline-block;
   margin-top: 10px;
 }
