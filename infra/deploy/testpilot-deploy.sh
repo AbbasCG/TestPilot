@@ -13,6 +13,9 @@
 #   sudo install -o root -g root -m 0755 infra/deploy/testpilot-deploy.sh /usr/local/sbin/testpilot-deploy
 set -Eeuo pipefail
 umask 077
+# Source files that Git writes into the work tree are copied into the images, so they must stay world-readable:
+# the API runs as www-data and cannot read root-owned 0600 files. Only the Git operations that write the tree relax the umask.
+git_tree() { (umask 022 && git -C "$DIR" "$@"); }
 
 CONFIG_FILE=${TESTPILOT_DEPLOY_ENV:-/etc/testpilot-deploy.env}
 # shellcheck disable=SC1090
@@ -162,7 +165,7 @@ port=$(env_value HTTP_PORT)
 port=${port:-8088}
 record() { printf '%s %s %s -> %s %s\n' "$(date -u +%FT%TZ)" "$mode" "${prev_head:0:7}" "${target:0:7}" "$1" >> "$DEPLOY_LOG"; }
 
-restore_tree() { git -C "$DIR" reset --hard --quiet "$prev_head"; }
+restore_tree() { git_tree reset --hard --quiet "$prev_head"; }
 
 verify() { # verify <label>
   local path waited
@@ -212,7 +215,7 @@ abort() {
 }
 
 log "deploying ${prev_head:0:7} -> $tag (migrations changed: $schema_changed)"
-git -C "$DIR" merge --ff-only --quiet "$target" || abort 'fast-forward failed'
+git_tree merge --ff-only --quiet "$target" || abort 'fast-forward failed'
 dc config -q > /dev/null 2>&1 || abort 'compose configuration of the target commit is invalid'
 
 log 'backing up database and evidence'
