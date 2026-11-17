@@ -103,6 +103,12 @@ new_world t5
 check 'deploy succeeds' 0 "$(run "deploy $new")"
 check 'work tree moved to target' "$new" "$(head_of)"
 grep -q 'build api web' "$STUB_LOG" || fail 'no build'
+# Regression (Deploy production #8): files the merge writes must stay readable by the API's non-root user.
+if [ "$(uname -s)" = Linux ]; then
+  check 'merged files are world-readable despite umask 077' 644 "$(stat -c %a "$server/app.txt")"
+else
+  echo 'skip merged-file mode check (needs Linux file modes)'
+fi
 grep -q 'migrate --force' "$STUB_LOG" || fail 'no migrate'
 grep -q "RELEASE_TAG=${new:0:7} compose -p testpilot" "$STUB_LOG" || fail 'compose not pinned to project testpilot with sha tag'
 pass=$((pass + 1)); echo 'ok   build, migrate and up ran with project testpilot and sha tag'

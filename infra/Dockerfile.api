@@ -10,8 +10,13 @@ WORKDIR /var/www/html
 COPY backend/composer.json backend/composer.lock ./
 RUN composer install --no-dev --prefer-dist --no-interaction --no-scripts --no-autoloader
 COPY backend/ ./
-RUN composer dump-autoload --no-dev --optimize \
+# COPY keeps the build context's modes. A context checked out under a restrictive umask (0600 files, 0700 folders)
+# would make the code unreadable to www-data, so normalise: everyone can read and traverse, only root can write.
+RUN find . -path ./storage -prune -o -path ./bootstrap/cache -prune -o -exec chmod u=rwX,go=rX {} + \
+    && composer dump-autoload --no-dev --optimize \
     && chown -R www-data:www-data storage bootstrap/cache
 USER www-data
+# Fail the build if the runtime user cannot read the code or boot the framework (this broke the production migration).
+RUN test -r app/Providers/AppServiceProvider.php && php artisan --version
 EXPOSE 9000
 CMD ["php-fpm"]

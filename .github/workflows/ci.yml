@@ -35,6 +35,16 @@ jobs:
       - uses: actions/checkout@v4
       - name: Deployment script self-test
         run: bash infra/deploy/selftest.sh
+      - name: API image is readable by its runtime user
+        # Regression for Deploy production #8: a build context with restrictive modes (0600 files, 0700 folders, as a
+        # umask-077 checkout produces) must still give the non-root runtime user a working application.
+        run: |
+          ctx=$(mktemp -d)
+          rsync -a --exclude .git ./ "$ctx/"
+          find "$ctx/backend" -type d -exec chmod 700 {} +
+          find "$ctx/backend" -type f -exec chmod 600 {} +
+          docker build -f "$ctx/infra/Dockerfile.api" -t testpilot-api:ci "$ctx"
+          docker run --rm testpilot-api:ci sh -c 'id -un && test -r app/Providers/AppServiceProvider.php && test -x app/Providers && php artisan --version'
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
