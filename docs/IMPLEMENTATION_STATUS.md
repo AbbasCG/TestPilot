@@ -56,7 +56,7 @@ Sources: FOUNDATION_REQUEST.md (M1–M4), CONTINUATION_REQUIREMENTS.md (M2–M5)
 
 1. Arabic PDF is browser-generated (print → PDF); no server-side PDF endpoint (would need a new dependency such as mPDF — owner approval required).
 2. No frontend unit-test runner exists (Vitest not installed); frontend behaviour is covered by Playwright. Accessibility checks are scripted (labels, names, alt, ids, lang/dir, overflow, focus), not an axe/screen-reader audit.
-3. Videos are not transcoded (metadata kept); inline MP4 has no byte-range support; no malware scanning; orphan-file sweep after hard crashes not implemented.
+3. Videos are not transcoded (metadata kept); inline MP4 has no byte-range support; no malware scanning; orphan files left by a hard crash are removed by `php artisan testpilot:evidence-sweep` (daily 03:30 via the scheduler container; `--dry-run`, `--grace=24` hours minimum; only app-named files, never database rows, rows without a file are only reported).
 4. Development DB (`testpilot`) has no accounts and is not migrated to the M5 schema from this branch (the main checkout contains an uncommitted Codex draft of the same migration filename). Run `php artisan migrate` after merging, create an owner with `testpilot:user`, then `testpilot:import-tharaa`.
 5. Docker images, TLS, restore drill and remote CI still unverified (Docker daemon unavailable). No deployment, DNS or push performed.
 6. Real-time sync is still polling (3 s on runs).

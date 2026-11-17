@@ -10,3 +10,5 @@ Artisan::command('testpilot:queue-probe', function () {
 })->purpose('Dispatch a background queue health probe');
 
 Schedule::job(new RecordQueueHeartbeat)->everyFiveMinutes()->withoutOverlapping();
+
+Schedule::command('testpilot:evidence-sweep')->dailyAt('03:30')->withoutOverlapping();
