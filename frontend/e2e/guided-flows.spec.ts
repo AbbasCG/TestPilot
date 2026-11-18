@@ -203,6 +203,52 @@ test("collaborative session: each tester gets own guided steps and waits for the
   await other.close();
 });
 
+test("shared checkpoint shows the role tag and the other tester's result for the same step", async ({ page, browser }) => {
+  test.setTimeout(120_000);
+  await login(page, "owner@e2e.test");
+  const project = await newProject(page, `نقطة مشتركة ${unique()}`);
+  const base = `/api/projects/${project.id}`;
+  const members = (await call(page, base)).data.members as { id: number; email: string }[];
+  const suite = (await call(page, `${base}/suites`, "POST", { name: "Core", position: 0, archived: false })).data;
+  const template = (await call(page, `${base}/scenario-templates`)).data.find((t: { id: string }) => t.id === "collaboration");
+  const created = (await call(page, `${base}/scenarios`, "POST", { ...template.content, suite_id: suite.id, status: "ready" })).data;
+  const run = (await call(page, `${base}/runs`, "POST", {
+    title: "جلسة النقطة المشتركة", build_version: "v1", environment_id: project.environment, suite_id: suite.id,
+    tester_a_id: members.find((m) => m.email === "owner@e2e.test")!.id, tester_b_id: members.find((m) => m.email === "tester@e2e.test")!.id,
+    scenarios: [{ id: created.id, version: created.version }],
+  })).data;
+  const roleOf = (participantId: number) => run.participants.find((x: { id: number }) => x.id === participantId).role as string;
+  const steps = run.cases[0].snapshot.steps as { id: string; type: string }[];
+  const mine = (role: string) => run.results.filter((r: { participant_id: number }) => roleOf(r.participant_id) === role) as { id: number; step_key: string; version: number }[];
+  const pass = (page: Page, id: number, version: number, actual: string) =>
+    call(page, `${base}/runs/${run.id}/results/${id}`, "PUT", { version, status: "passed", actual_result: actual, verified: true });
+  const checkpoint = steps.find((x) => x.type === "shared_checkpoint")!;
+
+  // A completes steps 1-2 and B step 3; the checkpoint then becomes available to both.
+  for (const result of mine("A").filter((r) => r.step_key !== checkpoint.id)) await pass(page, result.id, result.version, "تحققت النتيجة من جهة المختبر الأول");
+  const otherContext = await browser.newContext();
+  const second = await otherContext.newPage();
+  await login(second, "tester@e2e.test");
+  for (const result of mine("B").filter((r) => r.step_key !== checkpoint.id)) await pass(second, result.id, result.version, "تحققت النتيجة من جهة المختبر الثاني");
+
+  await page.goto(`/projects/${project.id}/runs/${run.id}`);
+  const card = page.getByRole("article", { name: /^الخطوة \d+ من \d+$/ });
+  await expect(card.locator("p .tester-tag").first()).toHaveText("Tester A");
+  await expect(card.getByText("خطوة مشتركة ينفّذها المختبران")).toBeVisible();
+  const partner = card.getByRole("list", { name: "نتيجة الطرف الآخر لهذه الخطوة" });
+  await expect(partner).toContainText("Tester B");
+  await expect(partner).toContainText("لم تُنفّذ");
+
+  // The other tester records the checkpoint; the first tester sees it on the same step after a refresh.
+  const theirs = mine("B").find((r) => r.step_key === checkpoint.id)!;
+  const latest = (await call(second, `${base}/runs/${run.id}`)).data.results.find((r: { id: number }) => r.id === theirs.id);
+  await pass(second, theirs.id, latest.version, "تأكد المختبر الثاني من العضوية المشتركة");
+  await page.reload();
+  await expect(partner).toContainText("نجحت");
+  await expect(partner).toContainText("تأكد المختبر الثاني من العضوية المشتركة");
+  await otherContext.close();
+});
+
 const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAFElEQVQImWNUjjnOgA0wYRUdtBIAApcBVuhaAw8AAAAASUVORK5CYII=", "base64");
 
 test("guided step that needs evidence blocks a pass until a screenshot is attached", async ({ page }) => {
