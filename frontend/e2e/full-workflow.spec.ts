@@ -75,7 +75,7 @@ test("complete collaborative QA lifecycle ends in a verified report", async ({ p
 
   // 3. Assign Tester A (owner) and Tester B, start the run.
   await page.getByRole("link", { name: "جلسات الاختبار" }).click();
-  await page.getByRole("link", { name: "جلسة جديدة" }).click();
+  await page.getByRole("link", { name: "ابدأ الاختبار" }).first().click();
   await page.getByLabel("عنوان الجلسة", { exact: true }).fill("اختبار قبول الإصدار");
   await page.getByLabel("إصدار التطبيق المختبَر").fill("v2.0.0");
   await page.getByRole("combobox", { name: "البيئة", exact: true }).selectOption({ label: "Staging" });

@@ -29,14 +29,17 @@ import {
   ArrowLeft,
   ArrowRight,
   Boxes,
+  Bug,
   Check,
   ChevronLeft,
   FolderKanban,
   LayoutDashboard,
   ListChecks,
+  ListTodo,
   LogOut,
   Moon,
   Play,
+  PlayCircle,
   Plus,
   Search,
   Settings,
@@ -57,6 +60,7 @@ import { AcceptInvitation, ChangePasswordForm, ForcedPasswordChange, ForgotPassw
 import { TeamMembers } from "./users/TeamMembers";
 
 import { CommandPalette, usePaletteShortcut } from "./CommandPalette";
+import { Disclosure } from "./testing/Disclosure";
 import "./shell.css";
 
 const TestManagement = lazy(() => import("./testing/TestManagement").then((m) => ({ default: m.TestManagement })));
@@ -436,7 +440,7 @@ function ProjectTable({ projects, filtered = false }: { projects: Project[]; fil
                 {p.stats?.last_run ? (
                   <>
                     <bdi>{p.stats.last_run.build_version}</bdi>
-                    <small>{p.stats.last_run.environment ?? "—"}</small>
+                    {p.stats.last_run.environment && <small> · {p.stats.last_run.environment}</small>}
                   </>
                 ) : (
                   <span className="muted">لم يُختبر بعد</span>
@@ -494,13 +498,14 @@ function Dashboard() {
         <div className="panel-title">
           <h2>آخر المشاريع</h2>
           <Link to="/projects">
-            كل المشاريع <ArrowLeft size={16} />
+            كل المشاريع{projects.data ? ` (${projects.data.meta.total})` : ""} <ArrowLeft size={16} />
           </Link>
         </div>
         {projects.isPending ? (
           <Loading />
         ) : (
-          projects.data && <ProjectTable projects={projects.data.data} />
+          // The home page is a summary: the full, searchable list lives on «المشاريع».
+          projects.data && <ProjectTable projects={projects.data.data.slice(0, 6)} />
         )}
       </section>
       <ProjectComparison />
@@ -714,13 +719,14 @@ function ProjectDetail() {
         }
       />
       <nav className="tabs" aria-label="أقسام المشروع">
-        <NavLink to={`/projects/${id}/runs`}>جلسات الاختبار</NavLink>
-        <NavLink to={`/projects/${id}/tests`}>الاختبارات</NavLink>
-        <NavLink to={`/projects/${id}/issues`}>المشكلات</NavLink>
-        <NavLink to={`/projects/${id}/analytics`}>التحليلات</NavLink>
+        {/* Workflow order: summary, design the tests, run them, follow the defects, report. */}
         <NavLink to={`/projects/${id}`} end>
           نظرة عامة
         </NavLink>
+        <NavLink to={`/projects/${id}/tests`}>الاختبارات</NavLink>
+        <NavLink to={`/projects/${id}/runs`}>جلسات الاختبار</NavLink>
+        <NavLink to={`/projects/${id}/issues`}>المشكلات</NavLink>
+        <NavLink to={`/projects/${id}/analytics`}>التحليلات</NavLink>
         <NavLink to={`/projects/${id}/team`}>
           <Users size={17} /> أعضاء الفريق
         </NavLink>
@@ -779,9 +785,26 @@ function ProjectOverview({ project: p }: { project: Project }) {
   });
   const labels: Record<string, string> = {
     "project.created": "إنشاء المشروع",
-    "project.updated": "تحديث المشروع",
+    "project.updated": "تحديث بيانات المشروع",
+    "project.imported": "استيراد بيانات المشروع",
     "environment.created": "إضافة بيئة عمل",
+    "environment.updated": "تعديل بيئة عمل",
     "member.updated": "تحديث عضوية الفريق",
+    "member.removed": "إزالة عضو من الفريق",
+    "suite.saved": "حفظ مجموعة اختبارات",
+    "scenario.saved": "حفظ سيناريو",
+    "scenarios.imported": "استيراد سيناريوهات من ملف",
+    "run.created": "بدء جلسة اختبار",
+    "result.recorded": "تسجيل نتيجة خطوة",
+    "issue.created": "تسجيل مشكلة",
+    "issue.updated": "تعديل مشكلة",
+    "issue.transitioned": "تغيير حالة مشكلة",
+    "issue.commented": "تعليق على مشكلة",
+    "retest.recorded": "تسجيل نتيجة إعادة اختبار",
+    "retest.reassigned": "إعادة إسناد إعادة اختبار",
+    "evidence.uploaded": "رفع دليل",
+    "evidence.downloaded": "تنزيل دليل",
+    "report.exported": "تصدير تقرير",
   };
   const stats = p.stats;
   const canManage = ["owner", "manager"].includes(p.role);
@@ -810,14 +833,52 @@ function ProjectOverview({ project: p }: { project: Project }) {
           </ol>
         </section>
       )}
+      {stats && (
+        <div className="overview-tiles">
+          <Link className="overview-tile" to={`/projects/${p.id}/tests`}>
+            <ListTodo size={20} aria-hidden />
+            <span>السيناريوهات</span>
+            <strong>{stats.scenarios_ready}<small> / {stats.scenarios_total}</small></strong>
+            <small>جاهزة للاختبار</small>
+          </Link>
+          <Link className="overview-tile" to={`/projects/${p.id}/runs`}>
+            <PlayCircle size={20} aria-hidden />
+            <span>الجلسات الجارية</span>
+            <strong>{stats.open_runs}</strong>
+            <small>من {stats.runs_total} جلسة</small>
+          </Link>
+          <Link className={`overview-tile${stats.critical_open ? " alert" : ""}`} to={`/projects/${p.id}/issues`}>
+            <Bug size={20} aria-hidden />
+            <span>المشكلات المفتوحة</span>
+            <strong>{stats.open_issues}</strong>
+            <small>{stats.critical_open ? `${stats.critical_open} حرجة أو معطِّلة` : "لا توجد مشكلات حرجة"}</small>
+          </Link>
+          <a className="overview-tile" href="#environments">
+            <Boxes size={20} aria-hidden />
+            <span>بيئات العمل</span>
+            <strong>{stats.environments_active}</strong>
+            <small>بيئة نشطة</small>
+          </a>
+        </div>
+      )}
       {stats?.last_run && (
-        <p className="last-run muted">
-          آخر جلسة: <Link className="text-link" to={`/projects/${p.id}/runs/${stats.last_run.id}`}>{stats.last_run.title}</Link> · <bdi>{stats.last_run.build_version}</bdi>
-          {stats.last_run.environment && <> · {stats.last_run.environment}</>}
-        </p>
+        <section className="panel padded last-run-card" aria-label="آخر جلسة">
+          <div>
+            <span className="muted">آخر جلسة</span>
+            <h2><Link to={`/projects/${p.id}/runs/${stats.last_run.id}`}>{stats.last_run.title}</Link></h2>
+            <p className="muted">
+              <bdi>{stats.last_run.build_version}</bdi>
+              {stats.last_run.environment && <> · {stats.last_run.environment}</>}
+              {" · "}<bdi>{new Date(stats.last_run.created_at).toLocaleDateString("ar")}</bdi>
+            </p>
+          </div>
+          <Link className={`button${stats.last_run.status === "completed" ? "" : " primary"}`} to={`/projects/${p.id}/runs/${stats.last_run.id}`}>
+            {stats.last_run.status === "completed" ? "عرض النتائج" : "متابعة الجلسة"}
+          </Link>
+        </section>
       )}
     <div className="detail-grid">
-      <section className="panel padded">
+      <section className="panel padded" id="environments">
         <h2>بيئات العمل</h2>
         <p className="muted">عناوين البيئات التي يستخدمها فريق الاختبار.</p>
         {p.environments?.length ? (
@@ -839,8 +900,9 @@ function ProjectOverview({ project: p }: { project: Project }) {
         ) : (
           <p className="hint">لا توجد بيئات. أضف بيئة التطوير أو التجربة.</p>
         )}
-        {["owner", "manager"].includes(p.role) && (
-          <form onSubmit={form.handleSubmit((v) => add.mutate(v))}>
+        {["owner", "manager"].includes(p.role) && (() => {
+          const envForm = (
+            <form onSubmit={form.handleSubmit((v) => add.mutate(v))}>
             <label>
               اسم البيئة
               <input
@@ -864,7 +926,10 @@ function ProjectOverview({ project: p }: { project: Project }) {
               <Plus size={17} /> إضافة بيئة
             </button>
           </form>
-        )}
+          );
+          // With environments in place the form is secondary, so it folds away instead of dominating the overview.
+          return p.environments?.length ? <Disclosure title="إضافة بيئة أخرى">{envForm}</Disclosure> : envForm;
+        })()}
       </section>
       <section className="panel padded">
         <h2>سجل النشاط</h2>
