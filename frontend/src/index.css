@@ -930,14 +930,6 @@ td {
   display: grid;
   gap: 20px;
 }
-.step-card > header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--line);
-  background: var(--canvas);
-}
 .step-number {
   display: grid;
   place-items: center;
@@ -966,15 +958,6 @@ td {
 .tester-both {
   background: #e1f1ee;
   color: #147d70;
-}
-.step-actions {
-  display: flex;
-  gap: 5px;
-  margin-right: auto;
-}
-.step-actions button {
-  padding: 6px;
-  margin: 0;
 }
 .dependencies {
   border: 1px solid var(--line);
@@ -1087,16 +1070,6 @@ td {
   .template-bar {
     flex-wrap: wrap;
   }
-  .step-card > header {
-    flex-wrap: wrap;
-  }
-  .step-card > header strong {
-    max-width: 190px;
-  }
-  .step-actions {
-    width: 100%;
-    justify-content: flex-end;
-  }
   .builder-save {
     padding: 12px;
     flex-wrap: wrap;
@@ -1118,14 +1091,3 @@ td {
 th { font-weight: 500; }
 textarea { min-height: 88px; }
 
-/* Scenario editor in-page navigation */
-.editor-nav { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 12px; margin: 0 0 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
-.editor-nav button { min-height: 36px; padding: 4px 12px; font-size: 13px; }
-.editor-nav ol { display: flex; gap: 6px; list-style: none; margin: 0; padding: 0; overflow-x: auto; max-width: 100%; }
-.editor-nav ol button { min-width: 36px; padding: 4px 8px; border-radius: 50%; font-variant-numeric: tabular-nums; }
-.editor-nav button[aria-current="true"] { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 12%, transparent); font-weight: 700; }
-.editor-nav-label { font-size: 12px; color: var(--muted); }
-.step-card, #editor-definition { scroll-margin-top: 76px; }
-.step-card:focus, #editor-definition:focus { outline: none; }
-.step-card:focus-within { border-color: color-mix(in srgb, var(--primary) 55%, var(--line)); }
-@media (max-width: 767px) { .editor-nav { top: 56px; } .step-card, #editor-definition { scroll-margin-top: 130px; } }

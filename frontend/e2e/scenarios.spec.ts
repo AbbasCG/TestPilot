@@ -52,29 +52,32 @@ test("scenario builder saves ordered steps and retains previous revisions", asyn
   await page
     .getByLabel("عنوان السيناريو", { exact: true })
     .fill("دعوة مشتركة محفوظة");
-  const stepDetails = page
-    .getByRole("button", { name: /تفاصيل إضافية للخطوة/ })
-    .first();
+  // Compact step table: optional details stay folded until asked for.
+  const stepDetails = page.getByRole("button", { name: /^تفاصيل إضافية للخطوة 1(?: |$)/ });
   await expect(stepDetails).toHaveAttribute("aria-expanded", "false");
-  await expect(page.getByLabel("رابط الصفحة").first()).toHaveCount(0);
+  await expect(page.getByLabel("رابط الصفحة")).toHaveCount(0);
   await stepDetails.click();
   await expect(stepDetails).toHaveAttribute("aria-expanded", "true");
   await expect(page.getByLabel("رابط الصفحة").first()).toBeVisible();
-  // In-page navigation: one chip per step jumps to it, moves focus into it and marks it current.
-  const editorNav = page.getByRole("navigation", { name: "أقسام المحرر" });
-  await expect(editorNav).toBeVisible();
-  const stepChips = editorNav.getByRole("button", { name: /^الانتقال إلى الخطوة/ });
-  expect(await stepChips.count()).toBeGreaterThanOrEqual(3);
-  await stepChips.nth(2).click();
-  await expect(page.getByRole("region", { name: "الخطوة 3" })).toBeInViewport();
-  await expect(stepChips.nth(2)).toHaveAttribute("aria-current", "true");
-  await expect(page.getByRole("region", { name: "الخطوة 3" }).getByLabel("عنوان الخطوة")).toBeFocused();
-  const before = await stepChips.count();
+  await stepDetails.click();
+  await expect(page.getByLabel("رابط الصفحة")).toHaveCount(0);
+
+  // Adding a step focuses its title; the handle reorders with the arrow keys and by dragging; delete removes it.
+  const rows = page.getByRole("rowgroup", { name: /^الخطوة \d+$/ });
+  const before = await rows.count();
+  expect(before).toBeGreaterThanOrEqual(3);
   await page.getByRole("button", { name: /إضافة خطوة/ }).click();
-  await expect(stepChips).toHaveCount(before + 1);
-  await expect(page.getByRole("region", { name: `الخطوة ${before + 1}` }).getByLabel("عنوان الخطوة")).toBeFocused();
-  await page.getByRole("button", { name: `حذف الخطوة ${before + 1}` }).click();
-  await expect(stepChips).toHaveCount(before);
+  await expect(rows).toHaveCount(before + 1);
+  await expect(page.getByLabel(`عنوان الخطوة ${before + 1}`, { exact: true })).toBeFocused();
+  await page.keyboard.type("خطوة مضافة من الجدول");
+  await page.getByLabel(`النتيجة المتوقعة للخطوة ${before + 1}`, { exact: true }).fill("تظهر النتيجة");
+  await page.getByRole("button", { name: `نقل الخطوة ${before + 1}`, exact: true }).press("ArrowUp");
+  await expect(page.getByLabel(`عنوان الخطوة ${before}`, { exact: true })).toHaveValue("خطوة مضافة من الجدول");
+  await expect(page.getByRole("button", { name: `نقل الخطوة ${before}`, exact: true })).toBeFocused();
+  await page.getByRole("button", { name: `نقل الخطوة ${before}`, exact: true }).dragTo(page.getByRole("rowgroup", { name: `الخطوة ${before + 1}`, exact: true }));
+  await expect(page.getByLabel(`عنوان الخطوة ${before + 1}`, { exact: true })).toHaveValue("خطوة مضافة من الجدول");
+  await page.getByRole("button", { name: `حذف الخطوة ${before + 1}`, exact: true }).click();
+  await expect(rows).toHaveCount(before);
   await page.screenshot({
     path: "test-results/scenario-builder.png",
     fullPage: true,
