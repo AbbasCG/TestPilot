@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, ArrowRight, Check, CheckCircle2, ExternalLink, ListChecks, Lock, Paperclip, X } from "lucide-react";
@@ -13,11 +13,21 @@ import "./guided.css";
 
 type Item = { result: Result; case: RunCase; step: RunCase["snapshot"]["steps"][number]; caseStepIndex: number };
 type Choice = "passed" | "failed" | "blocked";
-const choices: { value: Choice; label: string; icon: typeof Check }[] = [
-  { value: "passed", label: "نجحت", icon: Check },
-  { value: "failed", label: "فشلت", icon: X },
-  { value: "blocked", label: "تعذّر التنفيذ", icon: AlertTriangle },
+const choices: { value: Choice; label: string; icon: typeof Check; key: string }[] = [
+  { value: "passed", label: "نجحت", icon: Check, key: "1" },
+  { value: "failed", label: "فشلت", icon: X, key: "2" },
+  { value: "blocked", label: "تعذّر التنفيذ", icon: AlertTriangle, key: "3" },
 ];
+/**
+ * Keyboard shortcuts of the guided runner. Physical key codes, so they work with an Arabic or English layout:
+ * 1/P passed, 2/F failed, 3/B blocked; Ctrl/⌘+Enter saves and moves on.
+ */
+export function shortcutChoice(code: string): Choice | null {
+  if (["Digit1", "Numpad1", "KeyP"].includes(code)) return "passed";
+  if (["Digit2", "Numpad2", "KeyF"].includes(code)) return "failed";
+  if (["Digit3", "Numpad3", "KeyB"].includes(code)) return "blocked";
+  return null;
+}
 const stateLabel: Record<string, string> = { pending: "لم تُنفّذ", passed: "نجحت", failed: "فشلت", blocked: "تعذّر التنفيذ" };
 
 /** Ordered steps of the signed-in tester, across all scenarios in the run. */
@@ -149,6 +159,31 @@ function StepCard({ project: p, run, item, index, total, queryKey, writable, iss
   const reload = () => { setBase(result); setStatus(result.status === "pending" ? "passed" : (result.status as Choice)); setActual(result.actual_result ?? ""); setNotes(result.notes ?? ""); };
   const blockedByEvidence = status === "passed" && needsEvidence && files.length === 0;
   const invalid = happened && actual.trim().length < 3;
+  const submit = useRef<HTMLButtonElement>(null);
+  const note = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    if (!writable) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.isComposing) return;
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        // A click on the disabled button does nothing, so every save rule (evidence, stale version, description) still applies.
+        e.preventDefault();
+        submit.current?.click();
+        return;
+      }
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      // Typing in a field is never hijacked; only the result radios themselves allow the number keys.
+      if ((e.target as HTMLElement | null)?.closest('input:not([type="radio"]), textarea, select, [contenteditable="true"]')) return;
+      const choice = shortcutChoice(e.code);
+      if (!choice) return;
+      e.preventDefault();
+      setStatus(choice);
+      // A failure needs a description, so the cursor goes straight to it.
+      if (choice !== "passed") window.requestAnimationFrame(() => note.current?.focus());
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [writable]);
   const mine = run.participants.find((x) => x.id === result.participant_id);
   const partners = run.participants
     .filter((x) => x.id !== result.participant_id)
@@ -188,16 +223,17 @@ function StepCard({ project: p, run, item, index, total, queryKey, writable, iss
         <form id={`step-form-${result.id}`} onSubmit={(e) => { e.preventDefault(); save.mutate(); }}>
           <fieldset className="guided-choices">
             <legend>ما نتيجة هذه الخطوة؟</legend>
-            {choices.map(({ value, label, icon: Icon }) => (
+            {choices.map(({ value, label, icon: Icon, key }) => (
               <label key={value} className={`choice ${value}${status === value ? " on" : ""}`}>
-                <input type="radio" name={`s-${result.id}`} value={value} checked={status === value} onChange={() => setStatus(value)} />
-                <Icon size={17} aria-hidden /> {label}
+                <input type="radio" name={`s-${result.id}`} value={value} checked={status === value} onChange={() => setStatus(value)} aria-keyshortcuts={key} />
+                <Icon size={17} aria-hidden /> <span>{label}</span>
+                <kbd className="choice-key" aria-hidden>{key}</kbd>
               </label>
             ))}
           </fieldset>
           <label>
             {happened ? "ماذا حدث؟" : "ملاحظات (اختياري)"}
-            <textarea rows={3} maxLength={10000} required={happened} minLength={happened ? 3 : undefined} value={actual} onChange={(e) => setActual(e.target.value)} placeholder={happened ? "صف ما ظهر لك فعليًا" : "مطابقة للنتيجة المتوقعة"} />
+            <textarea ref={note} rows={3} maxLength={10000} required={happened} minLength={happened ? 3 : undefined} value={actual} onChange={(e) => setActual(e.target.value)} placeholder={happened ? "صف ما ظهر لك فعليًا" : "مطابقة للنتيجة المتوقعة"} />
           </label>
         </form>
         {(needsEvidence || happened) && (
@@ -218,10 +254,13 @@ function StepCard({ project: p, run, item, index, total, queryKey, writable, iss
           {save.error && <p className="hint">ما كتبتَه ما زال محفوظًا في النموذج؛ اضغط حفظ لإعادة المحاولة.</p>}
           {blockedByEvidence && <p className="hint">أرفق الدليل أولًا لتتمكن من حفظ «نجحت».</p>}
           <div className="guided-save">
-            <button type="submit" form={`step-form-${result.id}`} className="primary" disabled={save.isPending || stale || invalid || blockedByEvidence}>
+            <button ref={submit} type="submit" form={`step-form-${result.id}`} className="primary" aria-keyshortcuts="Control+Enter Meta+Enter" disabled={save.isPending || stale || invalid || blockedByEvidence}>
               {save.isPending ? "جارٍ الحفظ…" : save.error ? "إعادة محاولة الحفظ" : index < total ? "حفظ والانتقال للخطوة التالية" : "حفظ النتيجة"}
               <ArrowRight size={17} className="flip" />
             </button>
+            <p className="shortcut-hint">
+              لوحة المفاتيح: <kbd>1</kbd> نجحت · <kbd>2</kbd> فشلت · <kbd>3</kbd> تعذّر · <bdi><kbd>Ctrl</kbd>+<kbd>Enter</kbd></bdi> حفظ
+            </p>
           </div>
         </div>
         </>
