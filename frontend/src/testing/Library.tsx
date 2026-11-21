@@ -8,6 +8,8 @@ import { Busy, Notice } from "./shared";
 import { priorities, statuses } from "./types";
 import type { Scenario, Suite } from "./types";
 import { ImportPanel } from "./ImportPanel";
+import { BulkActions } from "./BulkActions";
+import "./bulk.css";
 
 const canDesign = (p: Project) => ["owner", "manager", "tester"].includes(p.role);
 
@@ -55,6 +57,25 @@ export function Library({ project: p, onEditSuite, suites }: { project: Project;
   });
   const suiteName = (id: number) => suites?.find((s) => s.id === id)?.name ?? "—";
   const rows = cases.data?.data ?? [];
+  // Selection covers the rows on screen; it is cleared when the filters or the page change.
+  const [checked, setChecked] = useState<Set<number>>(() => new Set());
+  const [bulkMessage, setBulkMessage] = useState("");
+  const [selectionKey, setSelectionKey] = useState(query.toString());
+  if (selectionKey !== query.toString()) {
+    setSelectionKey(query.toString());
+    setChecked(new Set());
+  }
+  const selected = rows.filter((r) => checked.has(r.id));
+  const selectable = canDesign(p);
+  const toggle = (id: number, on: boolean) => {
+    setBulkMessage("");
+    setChecked((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
 
   return (
     <>
@@ -110,15 +131,48 @@ export function Library({ project: p, onEditSuite, suites }: { project: Project;
           ))}
         </ul>
       )}
+      <p className="bulk-done" role="status">{selected.length ? "" : bulkMessage}</p>
+      {selectable && selected.length > 0 && (
+        <BulkActions
+          project={p}
+          selected={selected}
+          suites={suites}
+          onDone={(message) => {
+            setChecked(new Set());
+            setBulkMessage(message);
+          }}
+          onClear={() => setChecked(new Set())}
+        />
+      )}
       <section className="panel" aria-busy={cases.isFetching}>
         {cases.isPending ? <Busy /> : rows.length ? (
           <>
             <div className="table-wrap">
               <table>
-                <thead><tr><th>السيناريو</th><th>المجموعة</th><th>الحالة</th><th>الأولوية</th><th>النسخة</th></tr></thead>
+                <thead><tr>{selectable && (
+                  <th className="select-cell">
+                    <input
+                      type="checkbox"
+                      aria-label="تحديد كل سيناريوهات هذه الصفحة"
+                      checked={selected.length > 0 && selected.length === rows.length}
+                      ref={(el) => {
+                        if (el) el.indeterminate = selected.length > 0 && selected.length < rows.length;
+                      }}
+                      onChange={(e) => {
+                        setBulkMessage("");
+                        setChecked(e.target.checked ? new Set(rows.map((r) => r.id)) : new Set());
+                      }}
+                    />
+                  </th>
+                )}<th>السيناريو</th><th>المجموعة</th><th>الحالة</th><th>الأولوية</th><th>النسخة</th></tr></thead>
                 <tbody>
                   {rows.map((c) => (
-                    <tr key={c.id}>
+                    <tr key={c.id} className={checked.has(c.id) ? "selected" : undefined}>
+                      {selectable && (
+                        <td className="select-cell">
+                          <input type="checkbox" aria-label={`تحديد ${c.title}`} checked={checked.has(c.id)} onChange={(e) => toggle(c.id, e.target.checked)} />
+                        </td>
+                      )}
                       <td>
                         <Link className="scenario-title" to={String(c.id)}>
                           <ListChecks size={18} />

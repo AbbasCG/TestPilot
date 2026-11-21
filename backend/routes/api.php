@@ -61,6 +61,7 @@ Route::middleware(['auth:sanctum', 'account.usable', 'throttle:api'])->group(fun
     Route::put('/projects/{project}/suites/{suite}', [ScenarioController::class, 'saveSuite']);
     Route::get('/projects/{project}/scenarios', [ScenarioController::class, 'index']);
     Route::post('/projects/{project}/scenarios', [ScenarioController::class, 'store']);
+    Route::post('/projects/{project}/scenarios/bulk', [ScenarioController::class, 'bulk']);
     Route::get('/projects/{project}/scenarios/{scenario}', [ScenarioController::class, 'show'])->whereNumber('scenario');
     Route::put('/projects/{project}/scenarios/{scenario}', [ScenarioController::class, 'update']);
     Route::get('/projects/{project}/scenarios/{scenario}/revisions', [ScenarioController::class, 'revisions']);
