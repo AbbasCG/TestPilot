@@ -87,6 +87,25 @@ class ScenarioController extends Controller
         return new ScenarioResource($this->service->save($project, $request->user(), $request->validated(), $model));
     }
 
+    public function bulk(Request $request, Project $project): JsonResponse
+    {
+        Gate::authorize('view', $project);
+        Gate::authorize('designTests', $project);
+        $data = $request->validate([
+            'items' => 'required|array|min:1|max:100',
+            'items.*' => 'array:id,version',
+            'items.*.id' => 'required|integer|distinct',
+            'items.*.version' => 'required|integer|min:1',
+            'action' => ['required', Rule::in(['status', 'suite'])],
+            'status' => ['required_if:action,status', 'prohibited_unless:action,status', Rule::in(ScenarioRules::STATUSES)],
+            'suite_id' => ['required_if:action,suite', 'prohibited_unless:action,suite', 'integer',
+                Rule::exists('test_suites', 'id')->where('project_id', $project->id)->where('archived', false)],
+        ], ['suite_id.exists' => 'اختر مجموعة نشطة من المشروع نفسه.', 'items.required' => 'حدّد سيناريو واحدًا على الأقل.']);
+        $changes = $data['action'] === 'status' ? ['status' => $data['status']] : ['suite_id' => (int) $data['suite_id']];
+
+        return response()->json(['data' => $this->service->bulkUpdate($project, $request->user(), $data['items'], $changes)]);
+    }
+
     public function revisions(Project $project, int $scenario): JsonResponse
     {
         Gate::authorize('view', $project);

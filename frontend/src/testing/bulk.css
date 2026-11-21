@@ -1,0 +1,18 @@
+/* Scenario library selection and bulk actions bar. */
+.select-cell { width: 40px; text-align: center; }
+.select-cell input { width: 18px; height: 18px; margin: 0; accent-color: var(--primary); cursor: pointer; }
+tr.selected > td { background: color-mix(in srgb, var(--primary) 7%, transparent); }
+.bulk-bar { position: sticky; top: 8px; z-index: 5; margin: 0 0 12px; padding: 10px 12px; border: 1px solid color-mix(in srgb, var(--primary) 45%, var(--line)); border-radius: 12px; background: var(--surface); box-shadow: 0 6px 18px rgb(0 0 0 / .08); }
+.bulk-bar-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.bulk-selection { display: inline-flex; align-items: center; gap: 4px; }
+.bulk-group { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; }
+.bulk-group label { margin: 0; }
+.bulk-group select { min-height: 38px; margin: 0; }
+.bulk-bar button, .bulk-bar .button { display: inline-flex; align-items: center; gap: 5px; min-height: 38px; margin: 0; }
+.bulk-hint { font-size: 13px; }
+.bulk-bar .error { margin: 10px 0 0; }
+.bulk-done:empty { margin: 0; padding: 0; }
+.bulk-done { margin: 0 0 12px; padding: 8px 12px; border-radius: 10px; background: color-mix(in srgb, var(--success) 12%, transparent); color: var(--success-text); }
+@media (max-width: 760px) {
+  .bulk-selection { width: 100%; justify-content: space-between; }
+}
