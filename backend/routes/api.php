@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\IssueController;
+use App\Http\Controllers\MyWorkController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RunController;
 use App\Http\Controllers\ScenarioController;
@@ -45,6 +46,7 @@ Route::middleware(['auth:sanctum', 'account.usable', 'throttle:api'])->group(fun
         Route::get('/invitations', [AdminUserController::class, 'invitations']);
     });
     Route::get('/dashboard', [ProjectController::class, 'dashboard']);
+    Route::get('/my-work', MyWorkController::class);
     Route::get('/projects', [ProjectController::class, 'index']);
     Route::post('/projects', [ProjectController::class, 'store']);
     Route::get('/projects/{project}', [ProjectController::class, 'show']);

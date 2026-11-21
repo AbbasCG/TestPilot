@@ -74,6 +74,7 @@ function DashboardContent({ data }: { data: DashboardSummary }) {
               <button type="button" aria-pressed={work === "runs"} onClick={() => setWork("runs")}>جلساتي</button>
               <button type="button" aria-pressed={work === "retests"} onClick={() => setWork("retests")}>إعادات الاختبار</button>
             </div>
+            <Link className="text-link" to="/my-work">كل عملي</Link>
           </div>
           {work === "runs" ? (
             data.my_runs.length > 0 ? (

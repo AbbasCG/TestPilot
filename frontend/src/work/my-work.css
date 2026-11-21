@@ -1,0 +1,19 @@
+/* «عملي»: the signed-in user's sessions, retests and issues across projects. Builds on quality-overview.css. */
+.my-work h1 { margin: 0 0 2px; font-size: 24px; }
+.my-work .count { display: inline-grid; place-items: center; min-width: 22px; padding: 0 6px; border-radius: 99px; font-size: 12px; font-weight: 600; line-height: 20px; background: var(--quality-blue-bg); color: var(--quality-blue); }
+.my-work-jump { display: flex; flex-wrap: wrap; gap: 8px; }
+.my-work-jump a { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: inherit; font-size: 14px; }
+.my-work-jump a:hover { background: var(--canvas); }
+.my-work section { scroll-margin-top: 16px; }
+.my-work section:focus { outline: none; }
+.my-work .tester-tag { font-weight: 600; color: var(--quality-teal); }
+.my-progress { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.my-progress progress { flex: 0 1 180px; min-width: 60px; height: 6px; border: 0; border-radius: 99px; overflow: hidden; appearance: none; background: var(--line); accent-color: var(--quality-teal); }
+.my-progress progress::-webkit-progress-bar { background: var(--line); border-radius: 99px; }
+.my-progress progress::-webkit-progress-value { background: var(--quality-teal); border-radius: 99px; }
+.my-progress progress::-moz-progress-bar { background: var(--quality-teal); border-radius: 99px; }
+.my-progress small { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.my-work .quality-badge.blue { color: var(--quality-blue); background: var(--quality-blue-bg); }
+@media (max-width: 760px) {
+  .my-work-jump a { flex: 1 1 auto; justify-content: center; }
+}
