@@ -9,27 +9,23 @@ import {
 } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
-  ArrowDown,
-  ArrowUp,
   Copy,
-  Plus,
   Save,
-  Trash2,
 } from "lucide-react";
 import { api } from "../api";
 import type { Project } from "../api";
 import { Busy, Notice, useRefreshTesting } from "./shared";
 import { Library } from "./Library";
 import { Disclosure } from "./Disclosure";
+import { StepTable } from "./StepTable";
 import {
   emptyScenario,
-  newStep,
   priorities,
   statuses,
   stepTypes,
   testTypes,
 } from "./types";
-import type { Scenario, ScenarioContent, Step, Suite, Template } from "./types";
+import type { Scenario, ScenarioContent, Suite, Template } from "./types";
 
 const canDesign = (p: Project) =>
   ["owner", "manager", "tester"].includes(p.role);
@@ -248,19 +244,6 @@ function ScenarioEditor({
     key: K,
     value: ScenarioContent[K],
   ) => setContent((prev) => ({ ...prev, [key]: value }));
-  const changeStep = (index: number, changes: Partial<Step>) =>
-    field(
-      "steps",
-      content.steps.map((s, i) => (i === index ? { ...s, ...changes } : s)),
-    );
-  const move = (index: number, direction: number) => {
-    const steps = [...content.steps];
-    [steps[index], steps[index + direction]] = [
-      steps[index + direction],
-      steps[index],
-    ];
-    field("steps", steps);
-  };
   function applyTemplate() {
     const template = templates.data?.data.find(
       (t) => t.id === selectedTemplate,
@@ -348,7 +331,7 @@ function ScenarioEditor({
           <Copy size={16} /> استخدام القالب
         </button>
       </div>
-      <section className="panel padded">
+      <section className="panel padded" id="editor-definition" tabIndex={-1}>
         <h3>تعريف الاختبار</h3>
         <label>
           عنوان السيناريو
@@ -509,219 +492,8 @@ function ScenarioEditor({
           خطوات السيناريو{" "}
           <span className="muted">({content.steps.length})</span>
         </h2>
-        <button
-          type="button"
-          disabled={content.steps.length >= 100}
-          onClick={() => field("steps", [...content.steps, newStep()])}
-        >
-          <Plus size={17} /> إضافة خطوة
-        </button>
       </div>
-      <div className="step-ledger">
-        {content.steps.map((step, index) => (
-          <section
-            className="panel step-card"
-            key={step.id}
-            aria-label={`الخطوة ${index + 1}`}
-          >
-            <header>
-              <span className="step-number">{index + 1}</span>
-              <strong>{step.title || "خطوة جديدة"}</strong>
-              <span className={`tester-tag tester-${step.assigned_role}`}>
-                {step.assigned_role === "both"
-                  ? "المختبران A + B"
-                  : `المختبر ${step.assigned_role}`}
-              </span>
-              <div className="step-actions">
-                <button
-                  type="button"
-                  aria-label={`رفع الخطوة ${index + 1}`}
-                  disabled={index === 0}
-                  onClick={() => move(index, -1)}
-                >
-                  <ArrowUp size={16} />
-                </button>
-                <button
-                  type="button"
-                  aria-label={`خفض الخطوة ${index + 1}`}
-                  disabled={index === content.steps.length - 1}
-                  onClick={() => move(index, 1)}
-                >
-                  <ArrowDown size={16} />
-                </button>
-                <button
-                  type="button"
-                  aria-label={`حذف الخطوة ${index + 1}`}
-                  disabled={content.steps.length === 1}
-                  onClick={() =>
-                    field(
-                      "steps",
-                      content.steps
-                        .filter((s) => s.id !== step.id)
-                        .map((s) => ({
-                          ...s,
-                          depends_on: s.depends_on.filter(
-                            (id) => id !== step.id,
-                          ),
-                        })),
-                    )
-                  }
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            </header>
-            <div className="padded">
-              <div className="field-grid">
-                <label>
-                  عنوان الخطوة
-                  <input
-                    required
-                    maxLength={200}
-                    value={step.title}
-                    onChange={(e) =>
-                      changeStep(index, { title: e.target.value })
-                    }
-                  />
-                </label>
-                <label>
-                  نوع الخطوة
-                  <select
-                    value={step.type}
-                    onChange={(e) =>
-                      changeStep(index, {
-                        type: e.target.value,
-                        ...(e.target.value === "shared_checkpoint"
-                          ? { assigned_role: "both" }
-                          : {}),
-                        ...(e.target.value === "capture_evidence"
-                          ? { evidence_required: true }
-                          : {}),
-                      })
-                    }
-                  >
-                    {Object.entries(stepTypes).map(([k, v]) => (
-                      <option key={k} value={k}>
-                        {v}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  المختبر المسؤول
-                  <select
-                    disabled={step.type === "shared_checkpoint"}
-                    value={step.assigned_role}
-                    onChange={(e) =>
-                      changeStep(index, {
-                        assigned_role: e.target.value as Step["assigned_role"],
-                      })
-                    }
-                  >
-                    <option value="A">Tester A</option>
-                    <option value="B">Tester B</option>
-                    <option value="both">الطرفان مستقلان</option>
-                  </select>
-                </label>
-              </div>
-              <label>
-                النتيجة المتوقعة للخطوة
-                <textarea aria-label="النتيجة المتوقعة للخطوة"
-                  required
-                  maxLength={5000}
-                  value={step.expected_result}
-                  onChange={(e) =>
-                    changeStep(index, { expected_result: e.target.value })
-                  }
-                />
-              </label>
-              {step.type === "shared_checkpoint" && (
-                <label>
-                  معيار نقطة التحقق المشتركة
-                  <input
-                    required
-                    value={step.checkpoint || ""}
-                    onChange={(e) =>
-                      changeStep(index, { checkpoint: e.target.value })
-                    }
-                  />
-                </label>
-              )}
-              <label className="check-label">
-                <input
-                  type="checkbox"
-                  checked={step.evidence_required}
-                  onChange={(e) =>
-                    changeStep(index, { evidence_required: e.target.checked })
-                  }
-                />{" "}
-                دليل مطلوب لإثبات النتيجة
-              </label>
-              <Disclosure title="تفاصيل إضافية للخطوة" hint="الصفحة، الزر أو الحقل، القيمة، التعليمات، الاعتماديات">
-                <div className="field-grid">
-                <label>
-                  رابط الصفحة
-                  <input
-                    dir="ltr"
-                    type="url"
-                    value={step.url || ""}
-                    onChange={(e) => changeStep(index, { url: e.target.value })}
-                  />
-                </label>
-                <label>
-                  الزر أو الحقل
-                  <input
-                    value={step.target || ""}
-                    onChange={(e) =>
-                      changeStep(index, { target: e.target.value })
-                    }
-                  />
-                </label>
-                <label>
-                  قيمة الاختبار
-                  <input
-                    value={step.value || ""}
-                    onChange={(e) =>
-                      changeStep(index, { value: e.target.value })
-                    }
-                  />
-                </label>
-                </div>
-              <label>
-                تعليمات تفصيلية
-                <textarea aria-label="تعليمات تفصيلية"
-                  value={step.instructions || ""}
-                  onChange={(e) =>
-                    changeStep(index, { instructions: e.target.value })
-                  }
-                />
-              </label>
-              {index > 0 && (
-                <fieldset className="dependencies">
-                  <legend>انتظر اكتمال الخطوات التالية</legend>
-                  {content.steps.slice(0, index).map((prior, i) => (
-                    <label className="check-label" key={prior.id}>
-                      <input
-                        type="checkbox"
-                        checked={step.depends_on.includes(prior.id)}
-                        onChange={(e) =>
-                          changeStep(index, {
-                            depends_on: e.target.checked
-                              ? [...step.depends_on, prior.id]
-                              : step.depends_on.filter((id) => id !== prior.id),
-                          })
-                        }
-                      />
-                      {i + 1}. {prior.title || "خطوة بلا عنوان"}
-                    </label>
-                  ))}
-                </fieldset>
-              )}
-              </Disclosure>
-            </div>
-          </section>
-        ))}
-      </div>
+      <StepTable steps={content.steps} onChange={(steps) => field("steps", steps)} />
       <div className="builder-save">
         <span className="muted">
           {scenario

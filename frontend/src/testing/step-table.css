@@ -1,0 +1,63 @@
+/* Compact step editor (StepTable): one row per step, optional details in an expandable row. */
+.step-table-block { display: grid; gap: 12px; }
+.step-table-wrap { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow-x: auto; }
+.step-table { width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 860px; }
+.step-table thead th { padding: 10px 8px; font-size: 12px; color: var(--muted); text-align: start; background: var(--canvas); border-bottom: 1px solid var(--line); }
+.step-table th:nth-child(1) { width: 36px; }
+.step-table th:nth-child(2) { width: 34px; }
+.step-table th:nth-child(3) { width: 27%; }
+.step-table th:nth-child(4) { width: 150px; }
+.step-table th:nth-child(5) { width: 112px; }
+.step-table th:nth-child(7) { width: 104px; }
+.step-table tbody { border-bottom: 1px solid var(--line); }
+.step-table tbody:last-of-type { border-bottom: 0; }
+.step-table td { padding: 8px 6px; vertical-align: top; }
+.step-table .step-row input, .step-table .step-row select, .step-table .step-row textarea { display: block; box-sizing: border-box; width: 100%; margin: 0; min-height: 38px; padding: 7px 10px; font-size: 14px; }
+.step-table .step-row textarea { min-height: 38px; resize: vertical; field-sizing: content; max-height: 160px; line-height: 1.5; }
+.step-table .checkpoint-input { margin-top: 6px !important; border-style: dashed; }
+.step-table tbody:focus-within { background: color-mix(in srgb, var(--primary) 4%, transparent); }
+.step-table tbody.open { background: color-mix(in srgb, var(--primary) 3%, transparent); }
+.step-no { padding-top: 16px !important; text-align: center; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.drag-handle { display: grid; place-items: center; width: 28px; min-height: 38px; padding: 0; margin: 0; border: 0; background: none; color: var(--muted); cursor: grab; border-radius: 6px; }
+.drag-handle:hover { color: inherit; background: var(--canvas); }
+.drag-handle:active { cursor: grabbing; }
+.step-table tbody.dragging { opacity: .45; }
+.step-table tbody.drop-target { box-shadow: inset 0 3px 0 var(--primary); }
+
+.step-row-actions { display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
+.step-row-actions button { display: inline-flex; align-items: center; gap: 4px; min-height: 34px; padding: 4px 8px; margin: 0; }
+.details-toggle svg { transition: transform .15s; }
+.details-toggle svg.open { transform: rotate(180deg); }
+.extras-count { min-width: 18px; padding: 0 5px; border-radius: 99px; font-size: 11px; line-height: 18px; background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--link, #2a66c4); }
+.evidence-mark { color: var(--muted); }
+.delete-step:not(:disabled):hover { color: var(--danger-text); border-color: var(--danger); }
+
+.step-detail td { padding: 4px 76px 18px 18px; }
+.step-detail-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.step-detail label { margin-bottom: 10px; }
+.step-detail textarea { min-height: 64px; }
+.step-detail .dependencies { margin-top: 6px; }
+.step-move { margin-top: 10px; }
+.add-step { justify-self: start; }
+
+@media (prefers-reduced-motion: reduce) { .details-toggle svg { transition: none; } }
+
+/* Phones: each step becomes a card; cells carry their own labels. */
+@media (max-width: 760px) {
+  .step-table-wrap { border: 0; background: none; overflow: visible; }
+  .step-table { min-width: 0; table-layout: auto; }
+  .step-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .step-table, .step-table tbody, .step-table tr, .step-table td { display: block; width: 100%; }
+  .step-table tbody { margin-bottom: 12px; border: 1px solid var(--line) !important; border-radius: 12px; background: var(--surface); }
+  .step-table .step-row { display: grid; grid-template-columns: 28px 24px 1fr 1fr; column-gap: 8px; align-items: center; padding: 8px 10px; }
+  .step-table .step-row td { padding: 4px 2px; border: 0; }
+  .step-table .step-row td[data-label] { grid-column: 1 / -1; }
+  .step-table .step-row td[data-label="النوع"] { grid-column: 1 / 4; }
+  .step-table .step-row td[data-label="المختبر"] { grid-column: 4 / 5; }
+  .step-table td[data-label]::before { content: attr(data-label); display: block; font-size: 12px; color: var(--muted); margin-bottom: 3px; }
+  .step-no { padding-top: 4px !important; text-align: start; }
+  .step-row-actions { grid-column: 3 / 5; grid-row: 1; justify-self: end; width: auto !important; }
+  .step-detail td { padding: 4px 12px 14px; }
+  .step-detail-grid { grid-template-columns: 1fr; }
+}

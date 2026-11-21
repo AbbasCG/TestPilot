@@ -930,14 +930,6 @@ td {
   display: grid;
   gap: 20px;
 }
-.step-card > header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--line);
-  background: var(--canvas);
-}
 .step-number {
   display: grid;
   place-items: center;
@@ -966,15 +958,6 @@ td {
 .tester-both {
   background: #e1f1ee;
   color: #147d70;
-}
-.step-actions {
-  display: flex;
-  gap: 5px;
-  margin-right: auto;
-}
-.step-actions button {
-  padding: 6px;
-  margin: 0;
 }
 .dependencies {
   border: 1px solid var(--line);
@@ -1087,16 +1070,6 @@ td {
   .template-bar {
     flex-wrap: wrap;
   }
-  .step-card > header {
-    flex-wrap: wrap;
-  }
-  .step-card > header strong {
-    max-width: 190px;
-  }
-  .step-actions {
-    width: 100%;
-    justify-content: flex-end;
-  }
   .builder-save {
     padding: 12px;
     flex-wrap: wrap;
@@ -1117,3 +1090,4 @@ td {
 .app[data-theme="dark"] .sidebar nav a.active { background: #1d3558; color: #9fc0ff; }
 th { font-weight: 500; }
 textarea { min-height: 88px; }
+
