@@ -53,6 +53,10 @@ Sources: FOUNDATION_REQUEST.md (M1–M4), CONTINUATION_REQUIREMENTS.md (M2–M5)
 - Independent security review (no Critical/High) and code review; all actionable findings fixed with tests.
 - `docker compose config` validates; `backup.sh` passes `sh -n`.
 
+## Usability pass, phase 1 (2026-11-20)
+
+- Home is a summary (latest 6 projects, 8 in the comparison with «عرض كل المشاريع»); project tabs follow the workflow; the overview has clickable summary tiles, a latest-session card, Arabic labels for every activity event and a folded environment form; the runs list shows a segmented pass/fail progress bar per run from new server-side counts (`steps_total/passed/failed` on `GET /runs`). Review, competitor patterns and next phases: [UX_IMPROVEMENTS.md](UX_IMPROVEMENTS.md).
+
 ## Not done / limits
 
 1. Arabic PDF is browser-generated (print → PDF); no server-side PDF endpoint (would need a new dependency such as mPDF — owner approval required).

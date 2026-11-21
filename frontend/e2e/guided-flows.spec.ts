@@ -231,6 +231,14 @@ test("shared checkpoint shows the role tag and the other tester's result for the
   await login(second, "tester@e2e.test");
   for (const result of mine("B").filter((r) => r.step_key !== checkpoint.id)) await pass(second, result.id, result.version, "تحققت النتيجة من جهة المختبر الثاني");
 
+  // Project overview summarises the project and the runs list shows per-run progress from the server's counts.
+  await page.goto(`/projects/${project.id}`);
+  await expect(page.getByRole("navigation", { name: "أقسام المشروع" }).getByRole("link").first()).toHaveText("نظرة عامة");
+  await expect(page.locator(".overview-tile").filter({ hasText: "الجلسات الجارية" })).toContainText("1");
+  await expect(page.getByRole("region", { name: "آخر جلسة" })).toContainText("جلسة النقطة المشتركة");
+  await page.goto(`/projects/${project.id}/runs`);
+  await expect(page.getByLabel(/^3 ناجحة و0 فاشلة أو متعذرة من 5 خطوة$/)).toBeVisible();
+
   await page.goto(`/projects/${project.id}/runs/${run.id}`);
   const card = page.getByRole("article", { name: /^الخطوة \d+ من \d+$/ });
   await expect(card.locator("p .tester-tag").first()).toHaveText("Tester A");

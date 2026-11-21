@@ -97,4 +97,17 @@ class CollaborativeRunTest extends TestCase
         $this->putJson("/api/projects/$p/runs/$id/results/$first", self::resultPayload(1, 'failed'))->assertConflict();
         $this->assertDatabaseHas('step_results', ['id' => $first, 'status' => 'passed', 'version' => 1]);
     }
+
+    public function test_run_list_reports_progress_counts_per_run(): void
+    {
+        [$p, , , $run] = $this->fixture();
+        $id = $run['id'];
+        $first = $run['results'][0]['id'];
+        $this->putJson("/api/projects/$p/runs/$id/results/$first", self::resultPayload(0, 'failed'))->assertOk();
+        $this->getJson("/api/projects/$p/runs")->assertOk()
+            ->assertJsonPath('data.0.id', $id)
+            ->assertJsonPath('data.0.steps_total', 5)
+            ->assertJsonPath('data.0.steps_passed', 0)
+            ->assertJsonPath('data.0.steps_failed', 1);
+    }
 }

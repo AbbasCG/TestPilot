@@ -428,8 +428,13 @@ function PrintableReport({ project: p }: { project: Project }) {
 
 export function ProjectComparison() {
   const query = useQuery({ queryKey: ["analytics", "comparison"], queryFn: () => api<{ data: ComparisonRow[] }>("/api/analytics/projects") });
+  const [all, setAll] = useState(false);
   if (query.isPending) return <Busy />;
   if (!query.data?.data.length) return <Notice error={query.error} />;
+  // A summary on the home page: the most recent projects first, the rest on request.
+  const LIMIT = 8;
+  const rows = [...query.data.data].sort((x, y) => y.id - x.id);
+  const shown = all ? rows : rows.slice(0, LIMIT);
   return (
     <section className="panel comparison">
       <div className="panel-title">
@@ -451,7 +456,7 @@ export function ProjectComparison() {
             </tr>
           </thead>
           <tbody>
-            {query.data.data.map((row) => (
+            {shown.map((row) => (
               <tr key={row.id}>
                 <td>
                   <Link className="text-link" to={`/projects/${row.id}/analytics`}>
@@ -474,6 +479,13 @@ export function ProjectComparison() {
           </tbody>
         </table>
       </div>
+      {rows.length > LIMIT && (
+        <div className="panel-footer">
+          <button type="button" className="text-button" aria-expanded={all} onClick={() => setAll(!all)}>
+            {all ? "عرض أحدث المشاريع فقط" : `عرض كل المشاريع (${rows.length})`}
+          </button>
+        </div>
+      )}
     </section>
   );
 }

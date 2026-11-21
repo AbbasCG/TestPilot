@@ -27,7 +27,15 @@ class RunController extends Controller
     {
         Gate::authorize('view', $project);
 
-        return response()->json(TestRun::where('project_id', $project->id)->latest('id')->paginate(30));
+        // Per-run result counts let the list show progress without loading every run's detail.
+        $count = fn (array $statuses) => DB::table('step_results')->selectRaw('count(*)')->whereColumn('step_results.test_run_id', 'test_runs.id')
+            ->when($statuses !== [], fn ($query) => $query->whereIn('status', $statuses));
+
+        return response()->json(TestRun::where('project_id', $project->id)->select('test_runs.*')
+            ->selectSub($count([]), 'steps_total')
+            ->selectSub($count(['passed']), 'steps_passed')
+            ->selectSub($count(['failed', 'blocked']), 'steps_failed')
+            ->latest('id')->paginate(30));
     }
 
     public function store(RunRequest $request, Project $project): JsonResponse
