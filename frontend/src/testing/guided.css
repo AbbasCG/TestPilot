@@ -53,3 +53,11 @@
 
 .guided-partners { list-style: none; padding: 0; margin: 12px 0; display: grid; gap: 6px; }
 .guided-partners li { padding: 8px 12px; border: 1px solid var(--line); border-inline-start: 4px solid var(--primary, #2563eb); border-radius: 8px; overflow-wrap: anywhere; }
+
+/* Keyboard shortcuts: a key badge on each result and one legend line; hidden on touch-only devices. */
+.guided-save { flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.guided-choices .choice-key, .shortcut-hint kbd { font-family: var(--font-mono, monospace); font-size: 11px; line-height: 1; min-width: 20px; padding: 3px 6px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; color: var(--muted); background: var(--canvas); text-align: center; }
+.guided-choices .choice.on .choice-key { color: inherit; border-color: currentColor; }
+.shortcut-hint { margin: 0; font-size: 12px; color: var(--muted); }
+.shortcut-hint bdi { direction: ltr; unicode-bidi: isolate; }
+@media (hover: none) and (pointer: coarse) { .guided-choices .choice-key, .shortcut-hint { display: none; } }
