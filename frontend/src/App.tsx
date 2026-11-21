@@ -31,6 +31,7 @@ import {
   Boxes,
   Check,
   ChevronLeft,
+  ClipboardList,
   FolderKanban,
   LayoutDashboard,
   ListChecks,
@@ -65,6 +66,7 @@ const RunManagement = lazy(() => import("./testing/RunManagement").then((m) => (
 const IssueManagement = lazy(() => import("./issues/IssueManagement").then((m) => ({ default: m.IssueManagement })));
 const AnalyticsSection = lazy(() => import("./analytics/Analytics").then((m) => ({ default: m.AnalyticsSection })));
 const ProjectComparison = lazy(() => import("./analytics/Analytics").then((m) => ({ default: m.ProjectComparison })));
+const MyWork = lazy(() => import("./work/MyWork").then((m) => ({ default: m.MyWork })));
 const UsersAdmin = lazy(() => import("./users/UsersAdmin").then((m) => ({ default: m.UsersAdmin })));
 
 // Server-side account gates: an inactive account leaves the app; a pending
@@ -285,6 +287,9 @@ function Shell() {
           <NavLink to="/" end>
             <LayoutDashboard size={20} /> نظرة عامة
           </NavLink>
+          <NavLink to="/my-work">
+            <ClipboardList size={20} /> عملي
+          </NavLink>
           <NavLink to="/projects">
             <FolderKanban size={20} /> المشاريع
           </NavLink>
@@ -336,6 +341,7 @@ function Shell() {
           <Suspense fallback={<Loading />}>
           <Routes>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/my-work" element={<MyWork />} />
             <Route path="/projects" element={<Projects />} />
             <Route path="/projects/new" element={<ProjectWizard />} />
             <Route path="/projects/:id/*" element={<ProjectDetail />} />
@@ -360,6 +366,7 @@ function Shell() {
       </div>
       <nav className="mobile-nav" aria-label="التنقل السريع">
         <NavLink to="/" end><LayoutDashboard size={20} />الرئيسية</NavLink>
+        {!projectId && <NavLink to="/my-work"><ClipboardList size={20} />عملي</NavLink>}
         <NavLink to="/projects" end><FolderKanban size={20} />المشاريع</NavLink>
         {projectId && <NavLink to={`/projects/${projectId}/runs`}><Play size={20} />الجلسات</NavLink>}
         {projectId && <NavLink to={`/projects/${projectId}/tests`}><ListChecks size={20} />السيناريوهات</NavLink>}
